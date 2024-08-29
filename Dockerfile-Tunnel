@@ -2,7 +2,7 @@ FROM maven:3.8.4-openjdk-8 AS builder
 
 WORKDIR /app
 
-RUN mvn -pl web-ui,tunnel-server package -DskipTests
+RUN mvn -pl web-ui,tunnel-server package -DskipTests -U -T 4C
 
 COPY tunnel-server/target/arthas-tunnel-server-3.6.7-fatjar.jar app.jar
 COPY tunnel-server/src/main/resources/application.properties application.properties
