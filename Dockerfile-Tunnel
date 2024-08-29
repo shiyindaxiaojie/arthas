@@ -29,6 +29,8 @@ ENV NACOS_CONFIG_GROUP "arthas"
 ENV NACOS_CONFIG_USERNAME "nacos"
 ENV NACOS_CONFIG_PASSWORD "nacos"
 
+WORKDIR $HOME
+
 COPY --from=builder /app/tunnel-server/target/arthas-tunnel-server-3.6.7-fatjar.jar ./app.jar
 COPY --from=builder /app/tunnel-server/target/classes/application.properties ./
 COPY --from=builder /app/entrypoint.sh ./
