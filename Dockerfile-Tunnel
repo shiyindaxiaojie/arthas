@@ -36,6 +36,8 @@ COPY --from=builder /app/tunnel-server/target/classes/application.properties ./a
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 RUN chmod +x entrypoint.sh
 
+RUN ls -l /app
+
 EXPOSE $SERVER_PORT
 
 ENTRYPOINT ["./entrypoint.sh"]
