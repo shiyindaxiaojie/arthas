@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -89,7 +90,17 @@ public class ArthasTunnelController {
 
     private boolean accessApp(Set<String> roles, String appName) {
         for (String role : roles) {
-            if (role.endsWith(appName)) {
+            String pattern = role.replace("*", ".*");
+
+            if (!pattern.startsWith("^")) {
+                pattern = "^" + pattern;
+            }
+            if (!pattern.endsWith("$")) {
+                pattern += "$";
+            }
+
+            Pattern r = Pattern.compile(pattern);
+            if (r.matcher(appName).matches()) {
                 return true;
             }
         }
