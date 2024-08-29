@@ -5,7 +5,7 @@ WORKDIR /app
 RUN mvn -pl web-ui,tunnel-server package -DskipTests
 
 COPY tunnel-server/target/arthas-tunnel-server-3.6.7-fatjar.jar app.jar
-COPY tunnel-server/target/classes/application.properties application.properties
+COPY tunnel-server/src/main/resources/application.properties application.properties
 COPY entrypoint.sh entrypoint.sh
 
 FROM openjdk:8-jdk-alpine
