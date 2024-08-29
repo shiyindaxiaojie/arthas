@@ -34,12 +34,6 @@ COPY --from=builder /app/tunnel-server/target/classes/application.properties ./
 COPY --from=builder /app/entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
-USER $USER
-RUN mkdir $HOME/logs \
-  && touch $HOME/logs/entrypoint.out \
-  && ln -sf /dev/stdout $HOME/logs/entrypoint.out \
-  && ln -sf /dev/stderr $HOME/logs/entrypoint.out
-
 EXPOSE $SERVER_PORT
 
 ENTRYPOINT ["./entrypoint.sh"]
