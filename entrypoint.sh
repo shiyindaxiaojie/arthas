@@ -80,4 +80,4 @@ if [[ "${NACOS_CONFIG_ENABLED}" == "true" ]]; then
   JAVA_OPTS="${JAVA_OPTS} -Dspring.cloud.nacos.config.password=${NACOS_CONFIG_PASSWORD}"
 fi
 
-exec java $JAVA_OPTS -noverify -Djava.security.egd=file:/dev/./urandom -jar --spring.config.additional-location=/usr/local/application.properties /usr/local/app.jar
+exec java $JAVA_OPTS -noverify -Djava.security.egd=file:/dev/./urandom -jar --spring.config.additional-location=/app/application.properties /app/app.jar
