@@ -32,8 +32,8 @@ ENV NACOS_CONFIG_PASSWORD "nacos"
 WORKDIR $HOME
 
 COPY --from=builder /app/tunnel-server/target/arthas-tunnel-server-3.6.7-fatjar.jar ./app.jar
-COPY --from=builder /app/tunnel-server/target/classes/application.properties ./
-COPY --from=builder /app/entrypoint.sh ./
+COPY --from=builder /app/tunnel-server/target/classes/application.properties ./application.properties
+COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 RUN chmod +x entrypoint.sh
 
 EXPOSE $SERVER_PORT
