@@ -39,7 +39,7 @@ spring.security.users[0].name=admin
 spring.security.users[0].password=123456
 spring.security.users[0].roles=ADMIN
 # 指定服务授权
-spring.security.users[1].name=user
+spring.security.users[1].name=arthas
 spring.security.users[1].password=123456
 spring.security.users[1].roles=eden-gateway,eden-demo-cola
 ````
