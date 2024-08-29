@@ -2,7 +2,9 @@ FROM maven:3.8.4-openjdk-8 AS builder
 
 WORKDIR /app
 
-RUN mvn -pl web-ui,tunnel-server clean package -DskipTests -T 4C
+COPY . .
+
+RUN mvn -pl web-ui,tunnel-server package -DskipTests
 
 FROM openjdk:8-jdk-alpine
 
