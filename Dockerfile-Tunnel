@@ -40,4 +40,4 @@ RUN ls -l .
 
 EXPOSE $SERVER_PORT
 
-ENTRYPOINT ["java", "-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom", "-jar", "./app.jar"]
+ENTRYPOINT ["./entrypoint.sh"]
