@@ -6,7 +6,7 @@ JAVA_OPTS="${JAVA_OPTS} -server"
 JAVA_OPTS="${JAVA_OPTS} -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions"
 JAVA_OPTS="${JAVA_OPTS} -XX:+AlwaysPreTouch -XX:+PrintFlagsFinal -XX:-DisplayVMOutput -XX:-OmitStackTraceInFastThrow"
 JAVA_OPTS="${JAVA_OPTS} -Xms${XMS:-256M} -Xmx${XMX:-256M} -Xss${XSS:-256K}"
-JAVA_OPTS="${JAVA_OPTS} -XX:MetaspaceSize=${METASPACE_SIZE:-64m} -XX:MaxMetaspaceSize=${MAX_METASPACE_SIZE:-128M}"
+JAVA_OPTS="${JAVA_OPTS} -XX:MetaspaceSize=${METASPACE_SIZE:-64m} -XX:MaxMetaspaceSize=${MAX_METASPACE_SIZE:-64m}"
 JAVA_OPTS="${JAVA_OPTS} -XX:MaxGCPauseMillis=${MAX_GC_PAUSE_MILLIS:-200}"
 
 if [[ "${GC_MODE}" == "ShenandoahGC" ]]; then
