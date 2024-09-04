@@ -88,7 +88,7 @@ public class ArthasTunnelController {
     }
 
     private boolean isSuperAdmin(Set<String> roles) {
-        return accessApp(roles, ROLE_PREFIX + "ADMIN");
+        return accessApp(roles, "ADMIN");
     }
 
     private boolean accessApp(Set<String> roles, String appName) {
