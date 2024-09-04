@@ -5,6 +5,7 @@ import com.alibaba.arthas.tunnel.server.TunnelServer;
 import com.alibaba.arthas.tunnel.server.app.feature.dto.ArthasAgent;
 import com.alibaba.arthas.tunnel.server.app.feature.dto.ArthasAgentGroup;
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,6 +31,8 @@ import java.util.stream.Collectors;
 public class ArthasTunnelController {
 
     public static final String AGENT_SPLIT = "@";
+
+    private static final String ROLE_PREFIX = "ROLE_";
 
     private final TunnelServer tunnelServer;
 
@@ -85,7 +88,7 @@ public class ArthasTunnelController {
     }
 
     private boolean isSuperAdmin(Set<String> roles) {
-        return accessApp(roles, "ROLE_ADMIN");
+        return accessApp(roles, ROLE_PREFIX + "ADMIN");
     }
 
     private boolean accessApp(Set<String> roles, String appName) {
@@ -100,10 +103,19 @@ public class ArthasTunnelController {
             }
 
             Pattern r = Pattern.compile(pattern);
-            if (r.matcher(appName).matches()) {
+            if (r.matcher(ROLE_PREFIX + appName).matches()) {
                 return true;
             }
         }
         return false;
+    }
+
+    public static void main(String[] args) {
+        ArthasTunnelController controller = new ArthasTunnelController(null,null);
+        Set<String> roles = Sets.newHashSet("bizcollege-*");
+        System.out.println(controller.accessApp(roles, "bizcollege-uaa"));
+        System.out.println(controller.accessApp(roles, "bizcollege-order"));
+        System.out.println(controller.accessApp(roles, "fois-openapi"));
+        System.out.println(controller.accessApp(roles, "puyiwm-uaa"));
     }
 }
