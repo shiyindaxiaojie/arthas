@@ -109,13 +109,4 @@ public class ArthasTunnelController {
         }
         return false;
     }
-
-    public static void main(String[] args) {
-        ArthasTunnelController controller = new ArthasTunnelController(null,null);
-        Set<String> roles = Sets.newHashSet("bizcollege-*");
-        System.out.println(controller.accessApp(roles, "bizcollege-uaa"));
-        System.out.println(controller.accessApp(roles, "bizcollege-order"));
-        System.out.println(controller.accessApp(roles, "fois-openapi"));
-        System.out.println(controller.accessApp(roles, "puyiwm-uaa"));
-    }
 }
