@@ -1,6 +1,6 @@
 # heapdump
 
-[`heapdump` online tutorial](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=en&id=command-heapdump)
+[`heapdump` online tutorial](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=en&id=command-heapdump)
 
 ::: tip
 dump java heap in hprof binary format, like `jmap`.
@@ -11,16 +11,20 @@ dump java heap in hprof binary format, like `jmap`.
 ### Dump to file
 
 ```bash
-[arthas@58205]$ heapdump /tmp/dump.hprof
-Dumping heap to /tmp/dump.hprof...
+[arthas@58205]$ heapdump arthas-output/dump.hprof
+Dumping heap to arthas-output/dump.hprof ...
 Heap dump file created
 ```
+
+::: tip
+The generated file is located in the arthas-output directory and can be downloaded through the browser at http://localhost:8563/arthas-output/
+:::
 
 ### Dump only live objects
 
 ```bash
 [arthas@58205]$ heapdump --live /tmp/dump.hprof
-Dumping heap to /tmp/dump.hprof...
+Dumping heap to /tmp/dump.hprof ...
 Heap dump file created
 ```
 

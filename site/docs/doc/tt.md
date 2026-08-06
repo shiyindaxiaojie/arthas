@@ -1,6 +1,6 @@
 # tt
 
-[`tt`在线教程](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=cn&id=command-tt)
+[`tt`在线教程](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=cn&id=command-tt)
 
 ::: tip
 方法执行数据的时空隧道，记录下指定方法每次调用的入参和返回信息，并能对这些不同的时间下调用进行观测
@@ -11,6 +11,11 @@
 这个时候如果能记录下当时方法调用的所有入参和返回值、抛出的异常会对整个问题的思考与判断非常有帮助。
 
 于是乎，TimeTunnel 命令就诞生了。
+
+## 注意事项
+
+- tt 命令的实现是：把函数的入参/返回值等，保存到一个`Map<Integer, TimeFragment>`里，默认的大小是 100。
+- tt 相关功能在使用完之后，需要手动释放内存，否则长时间可能导致OOM。退出 arthas 不会自动清除 tt 的缓存 map。
 
 ## 使用参考
 
@@ -238,3 +243,15 @@ Affect(class count: 1 , method count: 1) cost in 56 ms, listenerId: 1
   2. **引用的对象**
 
      需要强调的是，`tt` 命令是将当前环境的对象引用保存起来，但仅仅也只能保存一个引用而已。如果方法内部对入参进行了变更，或者返回的对象经过了后续的处理，那么在 `tt` 查看的时候将无法看到当时最准确的值。这也是为什么 `watch` 命令存在的意义。
+
+### 通过索引删除指定的 tt 记录
+
+```
+tt -d 1001
+```
+
+### 清除所有的 tt 记录
+
+```
+tt --delete-all
+```

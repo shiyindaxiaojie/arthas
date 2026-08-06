@@ -1,6 +1,6 @@
 # mbean
 
-[`mbean`在线教程](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=cn&id=command-mbean)
+[`mbean`在线教程](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=cn&id=command-mbean)
 
 ::: tip
 查看 Mbean 的信息
@@ -65,4 +65,10 @@ mbean -E java.lang:type=Threading PeakThreadCount|ThreadCount|DaemonThreadCount
 
 ```bash
 mbean -i 1000 java.lang:type=Threading *Count
+```
+
+实时监控使用`-i`，使用`-n`命令执行命令的次数（默认为 100 次）：
+
+```bash
+mbean -i 1000 -n 50 java.lang:type=Threading *Count
 ```

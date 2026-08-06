@@ -1,6 +1,6 @@
 # jfr
 
-[`jfr` online tutorial](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=en&id=command-jfr)
+[`jfr` online tutorial](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=en&id=command-jfr)
 
 ::: tip
 Java Flight Recorder (JFR) is a tool for collecting diagnostic and profiling data about a running Java application. It is integrated into the Java Virtual Machine (JVM) and causes almost no performance overhead, so it can be used even in heavily loaded production environments.
@@ -74,6 +74,7 @@ Recording: recording=2 name=myRecording duration=PT1M (closed)
 
 ## dump jfr recording
 
+The `jfr dump`{{}} command will output the recordings from the start until the execution of the command to a JFR file, without stopping the recording.  
 Specifies the record output path.
 
 ```bash

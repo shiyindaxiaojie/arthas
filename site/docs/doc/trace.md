@@ -1,6 +1,6 @@
 # trace
 
-[`trace`在线教程](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=cn&id=command-trace)
+[`trace`在线教程](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=cn&id=command-trace)
 
 ::: tip
 方法内部调用路径，并输出方法路径上的每个节点上耗时
@@ -134,7 +134,7 @@ Affect(class-cnt:1 , method-cnt:1) cost in 60 ms.
         `---[0.076457ms] java.io.PrintStream:println() #28
 ```
 
-### 据调用耗时过滤
+### 根据调用耗时过滤
 
 ```bash
 $ trace demo.MathGame run '#cost > 10'

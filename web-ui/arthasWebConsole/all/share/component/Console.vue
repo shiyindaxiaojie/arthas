@@ -281,13 +281,13 @@ onMounted(() => {
           </label>
           <ul tabindex="0" class="dropdown-content menu shadow bg-base-100">
             <li>
-              <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/doc"
+              <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/3.x/doc"
                  target="_blank">文档
                 <span class="sr-only">(current)</span></a>
             </li>
             <li>
               <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm"
-                 href="https://arthas.aliyun.com/doc/arthas-tutorials.html" target="_blank">教程</a>
+                 href="https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html" target="_blank">教程</a>
             </li>
             <li>
               <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://github.com/alibaba/arthas"
@@ -297,16 +297,16 @@ onMounted(() => {
         </div>
         <a href="https://github.com/alibaba/arthas" target="_blank" title="" class="mr-2 w-20"><img
             :src="arthasLogo" alt="Arthas" title="Welcome to Arthas web console"></a>
-        <span class="navbar-version" style="font-size: 18px;margin-right: 30px">v3.6.7</span>
+        <span class="navbar-version" style="font-size: 18px;margin-right: 30px">v3.7.3</span>
         <ul class="menu menu-vertical 2xl:menu-horizontal hidden">
           <li>
-            <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/doc"
+            <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/3.x/doc"
                target="_blank">文档
               <span class="sr-only">(current)</span></a>
           </li>
           <li>
             <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm"
-               href="https://arthas.aliyun.com/doc/arthas-tutorials.html" target="_blank">教程</a>
+               href="https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html" target="_blank">教程</a>
           </li>
           <li>
             <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://github.com/alibaba/arthas"

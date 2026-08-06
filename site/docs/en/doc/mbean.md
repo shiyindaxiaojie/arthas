@@ -1,6 +1,6 @@
 # mbean
 
-[`mbean` online tutorial](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=en&id=command-mbean)
+[`mbean` online tutorial](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=en&id=command-mbean)
 
 ::: tip
 show Mbean information
@@ -65,4 +65,10 @@ Real-time monitoring using `-i` command:
 
 ```bash
 mbean -i 1000 java.lang:type=Threading *Count
+```
+
+Real-time monitoring using `-i` with number of times the command will be executed using `-n` command (100 times by default):
+
+```bash
+mbean -i 1000 -n 50 java.lang:type=Threading *Count
 ```

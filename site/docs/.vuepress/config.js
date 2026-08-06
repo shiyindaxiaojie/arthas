@@ -12,6 +12,7 @@ export default defineUserConfig({
   title: "arthas",
   description: "arthas user document",
   head,
+  base: "/3.x/",
   locales: {
     "/": {
       lang: "zh-CN",
@@ -91,7 +92,7 @@ export default defineUserConfig({
             .map((page) => [
               page.path.replace(/^\/en\/doc\//, "/doc/en/"),
               page.path,
-            ])
+            ]),
         );
 
         delete redirects["/doc/en/"];

@@ -1,6 +1,6 @@
 # jfr
 
-[`jfr`在线教程](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=cn&id=command-jfr)
+[`jfr`在线教程](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=cn&id=command-jfr)
 
 ::: tip
 Java Flight Recorder (JFR) 是一种用于收集有关正在运行的 Java 应用程序的诊断和分析数据的工具。它集成到 Java 虚拟机 (JVM) 中，几乎不会造成性能开销，因此即使在负载较重的生产环境中也可以使用。
@@ -74,6 +74,7 @@ Recording: recording=2 name=myRecording duration=PT1M (closed)
 
 ## dump jfr 记录
 
+`jfr dump`{{}} 会输出从开始到运行该命令这段时间内的记录到 JFR 文件，且不会停止 `jfr`{{}} 的记录  
 指定记录输出路径
 
 ```bash

@@ -59,7 +59,7 @@ public class ArthasAgent {
     }
 
     /**
-     * @see https://arthas.aliyun.com/doc/arthas-properties.html
+     * @see https://arthas.aliyun.com/3.x/doc/arthas-properties.html
      * @param configMap
      */
     public static void attach(Map<String, String> configMap) {
@@ -71,7 +71,7 @@ public class ArthasAgent {
      * @param arthasHome arthas directory
      */
     public static void attach(String arthasHome) {
-        new ArthasAgent().init();
+        new ArthasAgent(arthasHome).init();
     }
 
     public void init() throws IllegalStateException {
