@@ -24,8 +24,8 @@ export const navbarEN = [
     text: "VERSIONS",
     children: [
       {
-        text: "v4.x",
-        link: "https://arthas.aliyun.com/en/",
+        text: "v3.x",
+        link: "https://arthas.aliyun.com/3.x/en/",
       },
     ],
   },

@@ -4,6 +4,7 @@ import com.taobao.arthas.core.shell.session.Session;
 import com.taobao.arthas.core.shell.term.Tty;
 import com.taobao.arthas.core.util.SearchUtils;
 import com.taobao.arthas.core.util.StringUtils;
+import com.taobao.arthas.core.util.matcher.Matcher;
 import com.taobao.arthas.core.util.usage.StyledUsageFormatter;
 import com.taobao.middleware.cli.CLI;
 import com.taobao.middleware.cli.Option;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -77,6 +79,10 @@ public class CompletionUtils {
         }
     }
 
+    private static boolean isEndOfDirectory(String token) {
+        return !StringUtils.isBlank(token) && (token.endsWith(File.separator) || token.endsWith("/"));
+    }
+
     /**
      * 返回true表示已经完成completion，返回否则表示没有，调用者需要另外完成补全
      * @param completion
@@ -95,7 +101,7 @@ public class CompletionUtils {
         if (StringUtils.isBlank(token)) {
             dir = new File("").getAbsoluteFile();
             token = "";
-        } else if (token.endsWith("/")) {
+        } else if (isEndOfDirectory(token)) {
             dir = new File(token);
         } else {
             File parent = new File(token).getAbsoluteFile().getParentFile();
@@ -108,7 +114,7 @@ public class CompletionUtils {
         File tokenFile = new File(token);
 
         String tokenFileName = null;
-        if (token.endsWith("/")) {
+        if (isEndOfDirectory(token)) {
             tokenFileName = "";
         } else {
             tokenFileName = tokenFile.getName();
@@ -120,7 +126,7 @@ public class CompletionUtils {
 
         File[] listFiles = dir.listFiles();
 
-        ArrayList<String> names = new ArrayList<String>();
+        ArrayList<String> names = new ArrayList<>();
         if (listFiles != null) {
             for (File child : listFiles) {
                 if (child.getName().startsWith(partName)) {
@@ -133,7 +139,7 @@ public class CompletionUtils {
             }
         }
 
-        if (names.size() == 1 && names.get(0).endsWith("/")) {
+        if (names.size() == 1 && isEndOfDirectory(names.get(0))) {
             String name = names.get(0);
             // 这个函数补全后不会有空格，并且只能传入要补全的内容
             completion.complete(name.substring(tokenFileName.length()), false);
@@ -141,13 +147,13 @@ public class CompletionUtils {
         }
 
         String prefix = null;
-        if (token.endsWith("/")) {
+        if (isEndOfDirectory(token)) {
             prefix = token;
         } else {
             prefix = token.substring(0, token.length() - new File(token).getName().length());
         }
 
-        ArrayList<String> namesWithPrefix = new ArrayList<String>();
+        ArrayList<String> namesWithPrefix = new ArrayList<>();
         for (String name : names) {
             namesWithPrefix.add(prefix + name);
         }
@@ -216,27 +222,51 @@ public class CompletionUtils {
             className = tokens.get(tokens.size() - 3).value();
         }
 
-        Set<Class<?>> results = SearchUtils.searchClassOnly(completion.session().getInstrumentation(), className, 2);
-        if (results.size() != 1) {
-            // no class found or multiple class found
+        Matcher<String> classNameMatcher = SearchUtils.classNameMatcher(className, false);
+        Set<Class<?>> results = new LinkedHashSet<Class<?>>();
+        String matchedClassName = null;
+        for (Class<?> clazz : completion.session().getInstrumentation().getAllLoadedClasses()) {
+            if (clazz == null || !classNameMatcher.matching(clazz.getName())) {
+                continue;
+            }
+            if (matchedClassName == null) {
+                matchedClassName = clazz.getName();
+            } else if (!matchedClassName.equals(clazz.getName())) {
+                completion.complete(Collections.<String>emptyList());
+                return true;
+            }
+            results.add(clazz);
+        }
+        if (results.isEmpty()) {
+            // no class found
             completion.complete(Collections.<String>emptyList());
             return true;
         }
 
-        Class<?> clazz = results.iterator().next();
-
-        List<String> res = new ArrayList<String>();
-
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (StringUtils.isBlank(lastToken)) {
-                res.add(method.getName());
-            } else if (method.getName().startsWith(lastToken)) {
-                res.add(method.getName());
+        Set<String> res = new LinkedHashSet<String>();
+        for (Class<?> clazz : results) {
+            Method[] methods;
+            try {
+                methods = clazz.getDeclaredMethods();
+            } catch (LinkageError e) {
+                // A method signature may refer to a type that is not available to this class loader.
+                // Ignore that class and still offer methods from matching classes loaded elsewhere.
+                continue;
             }
+            for (Method method : methods) {
+                if (StringUtils.isBlank(lastToken)) {
+                    res.add(method.getName());
+                } else if (method.getName().startsWith(lastToken)) {
+                    res.add(method.getName());
+                }
+            }
+        }
+        if (StringUtils.isBlank(lastToken) || "<init>".startsWith(lastToken)) {
+            res.add("<init>");
         }
 
         if (res.size() == 1) {
-            completion.complete(res.get(0).substring(lastToken.length()), true);
+            completion.complete(res.iterator().next().substring(lastToken.length()), true);
             return true;
         } else {
             CompletionUtils.complete(completion, res);

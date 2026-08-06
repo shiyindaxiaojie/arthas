@@ -82,6 +82,18 @@ vmtool --action getInstances -c 19469ea2 --className org.springframework.context
 vmtool --action getInstances --classLoaderClass org.springframework.boot.loader.LaunchedURLClassLoader --className org.springframework.context.ApplicationContext --express 'instances[0].getBeanDefinitionNames()'
 ```
 
+### 过滤对象
+
+对 `getInstances` 返回的 `instances` 数组，可以继续使用 OGNL 选择表达式 `.{? 条件}` 做过滤，其中 `#this` 表示当前遍历到的对象。
+
+下面的例子使用 `java.lang.Thread`，适合在任意仍在运行的 JVM 里验证过滤表达式。它会筛选出所有非 daemon 线程，并只输出线程名：
+
+```bash
+vmtool --action getInstances --className java.lang.Thread --limit -1 --express 'instances.{? #this.daemon == false}.{name}'
+```
+
+如果想直接查看过滤后的对象本身，可以去掉最后的 `.{name}`。
+
 ## 强制 GC
 
 ```bash
@@ -90,10 +102,67 @@ vmtool --action forceGc
 
 - 可以结合 [`vmoption`](vmoption.md) 命令动态打开`PrintGC`开关。
 
+## 分析堆内存占用
+
+`heapAnalyze` 会从 GC Root 可达对象出发，统计各个类的实例数量与占用字节数，并输出占用最大的若干对象与类。
+
+```bash
+$ vmtool --action heapAnalyze --classNum 5 --objectNum 3
+```
+
+::: tip
+通过 `--classNum` 参数指定展示的类数量，通过 `--objectNum` 参数指定展示的对象数量。
+:::
+
+## 分析对象引用链
+
+`referenceAnalyze` 用于分析某个类的实例对象，并输出占用最大的若干对象及其引用回溯链（从对象回溯到 GC Root），用于辅助定位对象来源。
+
+```bash
+$ vmtool --action referenceAnalyze --className java.lang.String --objectNum 5 --backtraceNum 3
+```
+
+::: tip
+
+- 通过 `--objectNum` 参数指定展示的对象数量
+- 通过 `--backtraceNum` 参数指定回溯层数，设置为 `-1` 表示一直回溯到 root，设置为 `0` 表示不输出引用链
+- `--backtraceNum` 小于 `-1` 为非法值
+- `getInstances` 支持的 `--classLoaderClass` / `--classloader` 参数同样适用于 `referenceAnalyze`
+  :::
+
 ## interrupt 指定线程
 
 thread id 通过`-t`参数指定，可以使用 `thread`命令获取。
 
 ```bash
 vmtool --action interruptThread -t 1
+```
+
+## glibc 释放空闲内存
+
+Linux man page: [malloc_trim](https://man7.org/linux/man-pages/man3/malloc_trim.3.html)
+
+```bash
+vmtool --action mallocTrim
+```
+
+## glibc 内存状态
+
+内存状态将会输出到应用的 stderr。Linux man page: [malloc_stats](https://man7.org/linux/man-pages/man3/malloc_stats.3.html)
+
+```bash
+vmtool --action mallocStats
+```
+
+输出到 stderr 的内容如下：
+
+```
+Arena 0:
+system bytes     =     135168
+in use bytes     =      74352
+Total (incl. mmap):
+system bytes     =     135168
+in use bytes     =      74352
+max mmap regions =          0
+max mmap bytes   =          0
 ```

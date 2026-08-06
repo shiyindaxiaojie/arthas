@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# WIKI: https://arthas.aliyun.com/3.x/doc
+# WIKI: https://arthas.aliyun.com/doc
 # This script only supports bash, do not support posix sh.
 # If you have the problem like Syntax error: "(" unexpected (expecting "fi"),
 # Try to run "bash -version" to check the version.
@@ -8,10 +8,10 @@
 
 # program : Arthas
 #  author : Core Engine @ Taobao.com
-#    date : 2024-09-14
+#    date : 2026-07-19
 
 # current arthas script version
-ARTHAS_SCRIPT_VERSION=3.7.3
+ARTHAS_SCRIPT_VERSION=4.3.2
 
 # SYNOPSIS
 #   rreadlink <fileOrDirPath>
@@ -104,7 +104,7 @@ DEFAULT_TELNET_PORT="3658"
 HTTP_PORT=
 DEFAULT_HTTP_PORT="8563"
 
-# telnet session timeout seconds, default 1800
+# telnet session timeout seconds, default 10800
 SESSION_TIMEOUT=
 
 # use specify version
@@ -112,9 +112,6 @@ USE_VERSION=
 
 # remote repo to download arthas
 REPO_MIRROR=
-
-# use http to download arthas
-USE_HTTP=false
 
 # attach only, do not telnet connect
 ATTACH_ONLY=false
@@ -157,6 +154,8 @@ PASSWORD=
 
 # disabledCommands
 DISABLED_COMMANDS=
+# external command locations
+COMMAND_LOCATIONS=
 
 ############ Command Arguments ############
 
@@ -188,23 +187,23 @@ esac
 
 # check curl/grep/awk/telnet/unzip command
 if ! [ -x "$(command -v curl)" ]; then
-  echo 'Error: curl is not installed. Try to use java -jar arthas-boot3.jar' >&2
+  echo 'Error: curl is not installed. Try to use java -jar arthas-boot.jar' >&2
   exit 1
 fi
 if ! [ -x "$(command -v grep)" ]; then
-  echo 'Error: grep is not installed. Try to use java -jar arthas-boot3.jar' >&2
+  echo 'Error: grep is not installed. Try to use java -jar arthas-boot.jar' >&2
   exit 1
 fi
 if ! [ -x "$(command -v awk)" ]; then
-  echo 'Error: awk is not installed. Try to use java -jar arthas-boot3.jar' >&2
+  echo 'Error: awk is not installed. Try to use java -jar arthas-boot.jar' >&2
   exit 1
 fi
 if ! [ -x "$(command -v telnet)" ]; then
-  echo 'Error: telnet is not installed. Try to use java -jar arthas-boot3.jar' >&2
+  echo 'Error: telnet is not installed. Try to use java -jar arthas-boot.jar' >&2
   exit 1
 fi
 if ! [ -x "$(command -v unzip)" ]; then
-  echo 'Error: unzip is not installed. Try to use java -jar arthas-boot3.jar' >&2
+  echo 'Error: unzip is not installed. Try to use java -jar arthas-boot.jar' >&2
   exit 1
 fi
 
@@ -260,7 +259,7 @@ reset_for_env()
         JAVA_HOME=$(echo "$JAVA_COMMAND_PATH" | sed -n 's/\/bin\/java$//p')
     fi
 
-    # iterater throught candidates to find a proper JAVA_HOME at least contains tools.jar which is required by arthas.
+    # iterater through candidates to find a proper JAVA_HOME at least contains tools.jar which is required by arthas.
     if [ ! -d "${JAVA_HOME}" ]; then
         JAVA_HOME_CANDIDATES=($(ps aux | grep java | grep -v 'grep java' | awk '{print $11}' | sed -n 's/\/bin\/java$//p'))
         for JAVA_HOME_TEMP in ${JAVA_HOME_CANDIDATES[@]}; do
@@ -319,25 +318,16 @@ reset_for_env()
 
 }
 
-# get latest 3.x version from local
-get_local_3x_version()
+# get latest version from local
+get_local_version()
 {
-    ls "${ARTHAS_LIB_DIR}" | grep -oE '3\.[0-9]+\.[0-9]+.*' | sort -V | tail -1 | tr -d '\r\n'
+    ls "${ARTHAS_LIB_DIR}" | sort | tail -1
 }
 
-get_repo_url()
+# get latest version from remote
+get_remote_version()
 {
-    local repoUrl="${REPO_MIRROR}"
-    if [ "$USE_HTTP" = true ] ; then
-        repoUrl=${repoUrl/https/http}
-    fi
-    echo "${repoUrl}"
-}
-
-# get latest 3.x version from remote
-get_remote_3x_version()
-{
-    curl -sLk "https://arthas.aliyun.com/api/versions" | grep -oE '3\.[0-9]+\.[0-9]+.*' | sort -V | tail -1 | tr -d '\r\n'
+    curl -sLk "https://arthas.aliyun.com/api/latest_version"
 }
 
 # check version greater
@@ -368,7 +358,7 @@ update_if_necessary()
             || exit_on_err 1 "create ${temp_target_lib_dir} fail."
 
         # download current arthas version
-        local downloadUrl="${REMOTE_DOWNLOAD_URL//PLACEHOLDER_REPO/$(get_repo_url)}"
+        local downloadUrl="${REMOTE_DOWNLOAD_URL//PLACEHOLDER_REPO/${REPO_MIRROR}}"
         downloadUrl="${downloadUrl//PLACEHOLDER_VERSION/${update_version}}"
         echo "Download arthas from: ${downloadUrl}"
         curl \
@@ -433,21 +423,23 @@ Usage:
        [--app-name <value>]
        [--username <value>] [--password <value>]
        [--disabled-commands <value>]
-       [--use-version <value>] [--repo-mirror <value>] [--versions] [--use-http]
+       [--command-locations <value>]
+       [--use-version <value>] [--repo-mirror <value>] [--versions]
        [--attach-only] [-c <value>] [-f <value>] [-v] [pid]
+
+NOTE: Arthas 4 supports JDK 8+. If you need to diagnose applications running on JDK 6/7, you can use Arthas 3.
 
 Options and Arguments:
  -h,--help                      Print usage
     --target-ip <value>         The target jvm listen ip, default 127.0.0.1
     --telnet-port <value>       The target jvm listen telnet port, default 3658
     --http-port <value>         The target jvm listen http port, default 8563
-    --session-timeout <value>   The session timeout seconds, default 1800 (30min)
+    --session-timeout <value>   The session timeout seconds, default 10800 (3h)
     --arthas-home <value>       The arthas home
     --use-version <value>       Use special version arthas
     --repo-mirror <value>       Use special remote repository mirror, value is
                                 center/aliyun or http repo url.
     --versions                  List local and remote arthas versions
-    --use-http                  Enforce use http to download, default use https
     --attach-only               Attach target process only, do not connect
     --debug-attach              Debug attach agent
     --tunnel-server             Remote tunnel server url
@@ -456,6 +448,8 @@ Options and Arguments:
     --username                  Special username
     --password                  Special password
     --disabled-commands         Disable special commands
+    --command-locations         External command jar locations, support jar file or directory,
+                                separated by comma
     --select                    select target process by classname or JARfilename
  -c,--command <value>           Command to execute, multiple commands separated
                                 by ;
@@ -466,22 +460,23 @@ Options and Arguments:
  <pid>                          Target pid
 
 EXAMPLES:
-  ./as3.sh <pid>
-  ./as3.sh --telnet-port 9999 --http-port -1
-  ./as3.sh --username admin --password <password>
-  ./as3.sh --tunnel-server 'ws://192.168.10.11:7777/ws' --app-name demoapp
-  ./as3.sh --tunnel-server 'ws://192.168.10.11:7777/ws' --agent-id bvDOe8XbTM2pQWjF4cfw
-  ./as3.sh --stat-url 'http://192.168.10.11:8080/api/stat'
-  ./as3.sh -c 'sysprop; thread' <pid>
-  ./as3.sh -f batch.as <pid>
-  ./as3.sh --use-version 3.7.3
-  ./as3.sh --session-timeout 3600
-  ./as3.sh --attach-only
-  ./as3.sh --disabled-commands stop,dump
-  ./as3.sh --select math-game
-  ./as3.sh --repo-mirror aliyun --use-http
+  ./as.sh <pid>
+  ./as.sh --telnet-port 9999 --http-port -1
+  ./as.sh --username admin --password <password>
+  ./as.sh --tunnel-server 'ws://192.168.10.11:7777/ws' --app-name demoapp
+  ./as.sh --tunnel-server 'ws://192.168.10.11:7777/ws' --agent-id bvDOe8XbTM2pQWjF4cfw
+  ./as.sh --stat-url 'http://192.168.10.11:8080/api/stat'
+  ./as.sh -c 'sysprop; thread' <pid>
+  ./as.sh -f batch.as <pid>
+  ./as.sh --use-version 4.3.2
+  ./as.sh --session-timeout 3600
+  ./as.sh --attach-only
+  ./as.sh --disabled-commands stop,dump
+  ./as.sh --command-locations '/opt/arthas/ext-command.jar,/opt/arthas/ext-commands'
+  ./as.sh --select math-game
+  ./as.sh --repo-mirror aliyun
 WIKI:
-  https://arthas.aliyun.com/3.x/doc
+  https://arthas.aliyun.com/doc
 
 Here is the list of possible java process(es) to attatch:
 "
@@ -659,9 +654,10 @@ parse_arguments()
         shift # past argument
         shift # past value
         ;;
-        --use-http)
-        USE_HTTP=true
+        --command-locations)
+        COMMAND_LOCATIONS="$2"
         shift # past argument
+        shift # past value
         ;;
         --attach-only)
         ATTACH_ONLY=true
@@ -812,8 +808,8 @@ parse_arguments()
         fi
         if [[ ($httpPortPid) && ($TARGET_PID != $httpPortPid) ]]; then
             echo "Target process $TARGET_PID is not the process using port $(getHttpPortOrDefault), you will connect to an unexpected process."
-            echo "1. Try to restart as3.sh, select process $httpPortPid, shutdown it first with running the 'stop' command."
-            echo "2. Try to use different http port, for example: as3.sh --telnet-port 9998 --http-port 9999"
+            echo "1. Try to restart as.sh, select process $httpPortPid, shutdown it first with running the 'stop' command."
+            echo "2. Try to use different http port, for example: as.sh --telnet-port 9998 --http-port 9999"
             exit 1
         fi
     elif [ -z ${TARGET_PID} ]; then
@@ -871,6 +867,10 @@ attach_jvm()
     if [ "${DISABLED_COMMANDS}" ]; then
         tempArgs+=("-disabled-commands")
         tempArgs+=("${DISABLED_COMMANDS}")
+    fi
+    if [ "${COMMAND_LOCATIONS}" ]; then
+        tempArgs+=("-command-locations")
+        tempArgs+=("${COMMAND_LOCATIONS}")
     fi
 
     if [ "${TARGET_IP}" ]; then
@@ -931,8 +931,8 @@ sanity_check() {
     if [ "$current_user" != "$target_user" ]; then
         echo "The current user ($current_user) does not match with the owner of process ${TARGET_PID} ($target_user)."
         echo "To solve this, choose one of the following command:"
-        echo "  1) sudo su $target_user && ./as3.sh"
-        echo "  2) sudo -u $target_user -EH ./as3.sh"
+        echo "  1) sudo su $target_user && ./as.sh"
+        echo "  2) sudo -u $target_user -EH ./as.sh"
         exit_on_err 1
     fi
 }
@@ -972,15 +972,15 @@ port_pid_check() {
 
 print_telnet_port_pid_error() {
     echo "[ERROR] The telnet port $(getTelnetPortOrDefault) is used by process $telnetPortPid instead of target process $TARGET_PID, you will connect to an unexpected process."
-    echo "[ERROR] 1. Try to restart as3.sh, select process $telnetPortPid, shutdown it first with running the 'stop' command."
+    echo "[ERROR] 1. Try to restart as.sh, select process $telnetPortPid, shutdown it first with running the 'stop' command."
     echo "[ERROR] 2. Try to stop the existing arthas instance: java -jar arthas-client.jar 127.0.0.1 $(getTelnetPortOrDefault) -c \"stop\""
-    echo "[ERROR] 3. Try to use different telnet port, for example: as3.sh --telnet-port 9998 --http-port -1"
+    echo "[ERROR] 3. Try to use different telnet port, for example: as.sh --telnet-port 9998 --http-port -1"
 }
 
 print_telnet_port_used_error() {
     local error_msg=$1
     echo "[ERROR] The telnet port $(getTelnetPortOrDefault) is used, but process $error_msg, you will connect to an unexpected process."
-    echo "[ERROR] Try to use different telnet port, for example: as3.sh --telnet-port 9998 --http-port -1"
+    echo "[ERROR] Try to use different telnet port, for example: as.sh --telnet-port 9998 --http-port -1"
 }
 
 # active console
@@ -1051,17 +1051,13 @@ main()
 
     # try to find arthas home from --use-version
     if [[ (-z "${ARTHAS_HOME}")  && (! -z "${USE_VERSION}") ]]; then
-        if [[ "${USE_VERSION:0:1}" != "3" ]] ; then
-          echo "Arthas version ${USE_VERSION} is not supported; only version 3.x is supported." 1>&2
-            exit 1
-        fi
         if [[ ! -d "${ARTHAS_LIB_DIR}/${USE_VERSION}/arthas" ]] ; then
             update_if_necessary "${USE_VERSION}" || echo "update fail, ignore this update." 1>&2
         fi
         ARTHAS_HOME="${ARTHAS_LIB_DIR}/${USE_VERSION}/arthas"
     fi
 
-    # try to set arthas home from as3.sh directory
+    # try to set arthas home from as.sh directory
     if [ -z "${ARTHAS_HOME}" ] ; then
         [[ -a "${DIR}/arthas-core.jar" ]] \
         && [[ -a "${DIR}/arthas-agent.jar" ]] \
@@ -1071,13 +1067,13 @@ main()
 
     # try to find arthas under ~/.arthas/lib
     if [ -z "${ARTHAS_HOME}" ] ; then
-        local remote_3x_version=$(get_remote_3x_version)
-        local arthas_local_3x_version=$(get_local_3x_version)
-        if $(version_gt $remote_3x_version $arthas_local_3x_version) ; then
-            update_if_necessary "${remote_3x_version}" || echo "update fail, ignore this update." 1>&2
+        local remote_version=$(get_remote_version)
+        local arthas_local_version=$(get_local_version)
+        if $(version_gt $remote_version $arthas_local_version) ; then
+            update_if_necessary "${remote_version}" || echo "update fail, ignore this update." 1>&2
         fi
-        local arthas_local_3x_version=$(get_local_3x_version)
-        ARTHAS_HOME="${ARTHAS_LIB_DIR}/${arthas_local_3x_version}/arthas"
+        local arthas_local_version=$(get_local_version)
+        ARTHAS_HOME="${ARTHAS_LIB_DIR}/${arthas_local_version}/arthas"
     fi
 
     echo "Arthas home: ${ARTHAS_HOME}"

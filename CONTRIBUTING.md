@@ -27,28 +27,30 @@ Please refer to [README.MD at killercoda branch](https://github.com/alibaba/arth
 
 Recommend to use [`as-package.sh`](as-package.sh) to package, which will auto-install the latest Arthas to local `~/.arthas` and when debugging, Arthas will auto-load the latest version.
 
+Tip: for faster local iteration, you can use `./as-package.sh --fast` (skip `clean` and skip documentation front-end build in `site` module). If you need to rebuild docs, run without `--fast` or use `./mvnw clean package -DskipTests -P full`.
+
 * To support jni, cpp compiling environment support is required
 * mac needs to install xcode
 * windows need to install gcc
 
 F.Y.I
-1. when using [`as3.sh`](https://github.com/alibaba/arthas/blob/master/bin/as3.sh) to start Arthas, it will get the latest version under `~/.arthas/lib`;
+1. when using [`as.sh`](https://github.com/alibaba/arthas/blob/master/bin/as.sh) to start Arthas, it will get the latest version under `~/.arthas/lib`;
 2. when [`as-package.sh`](as-package.sh) packaging, it will get the version from `pom.xml` and suffix it with the current timestamp e.g. `3.0.5.20180917161808`. 
 
-You can also use `./mvnw clean package -DskipTests` to package and generate a `zip` under `packaging/target/` but remember when `as3.sh` starts, it load the version under `~/.arthas/lib`.
+You can also use `./mvnw clean package -DskipTests` to package and generate a `zip` under `packaging/target/` but remember when `as.sh` starts, it load the version under `~/.arthas/lib`.
 
 ### Start Arthas in specified version
 
 When there are several different version, you can use `--use-version` to specify the version of Arthas to start your debug.
 
 ```bash
-./as3.sh --use-version 3.0.5.20180919185025
+./as.sh --use-version 3.0.5.20180919185025
 ```
 
 Tip: you can use `--versions` to list all available versions.
 
 ```bash
-./as3.sh --versions
+./as.sh --versions
 ```
 
 ### Debug
@@ -92,27 +94,29 @@ Tip: you can use `--versions` to list all available versions.
 
 本地开发时，推荐执行`as-package.sh`来打包，会自动安装最新版本的arthas到`~/.arthas`目录里。debug时会自动使用最新版本。
 
+提示：本地快速迭代可以执行 `./as-package.sh --fast`（跳过 `clean`，并跳过 `site` 模块的文档前端构建）。如果需要重建文档，请不要使用 `--fast`，或者执行 `./mvnw clean package -DskipTests -P full`。
+
 * 代码里要编译jni，需要cpp编译环境支持
 * mac需要安装xcode
 * windows需要安装gcc
 
 
-`as3.sh`在启动时，会对`~/.arthas/lib`下面的目录排序，取最新的版本。`as-package.sh`在打包时，会取`pom.xml`里的版本号，再拼接上当前时间，比如： `3.0.5.20180917161808`，这样子排序时取的就是最新的版本。
+`as.sh`在启动时，会对`~/.arthas/lib`下面的目录排序，取最新的版本。`as-package.sh`在打包时，会取`pom.xml`里的版本号，再拼接上当前时间，比如： `3.0.5.20180917161808`，这样子排序时取的就是最新的版本。
 
-也可以直接 `./mvnw clean package -DskipTests`打包，生成的zip在 `packaging/target/` 下面。但是注意`as3.sh`启动加载的是`~/.arthas/lib`下面的版本。
+也可以直接 `./mvnw clean package -DskipTests`打包，生成的zip在 `packaging/target/` 下面。但是注意`as.sh`启动加载的是`~/.arthas/lib`下面的版本。
 
 ### 启动指定版本的arthas
 
 本地开发时，可能会产生多个版本，可以用 `--use-version` 参数来指定版本，比如
 
 ```bash
-./as3.sh --use-version 3.0.5.20180919185025
+./as.sh --use-version 3.0.5.20180919185025
 ```
 
 可以用`--versions`参数来列出所有版本：
 
 ```bash
-./as3.sh --versions
+./as.sh --versions
 ```
 
 ### Debug
@@ -133,11 +137,12 @@ Tip: you can use `--versions` to list all available versions.
 发布release版本流程：
 
 * 如果 arthas-vmtool 有更新，则需要手动触发action，构建后会把新的动态库文件提交到 lib 目录。 https://github.com/alibaba/arthas/actions/workflows/build-vmtool.yaml
-* 修改`as3.sh`里的版本，最后修改日期， `Bootstrap.java`里的版本，Dockerfile里的版本
+* 修改`as.sh`里的版本，最后修改日期， `Bootstrap.java`里的版本，Dockerfile里的版本
 * 修改本地的maven settings.xml
+* 执行一次 gpg --sign /tmp/2.txt ，让 gpg 后台进程启动，否则打包可能失败
 * mvn clean deploy -DskipTests -P full -P release
 
-* 到 https://oss.sonatype.org/ 上，“Staging Repositories”然后close掉自己的，再release
+* 到 https://central.sonatype.com/publishing/deployments ，Publish 自己的 Deployment
 * 发布后，可以到这里查看是否同步到仓库里了： https://repo1.maven.org/maven2/com/taobao/arthas/arthas-packaging/
 * 发布完maven仓库之后，需要到阿里云的仓库里检查是否同步，有可能有延时
 
@@ -146,15 +151,11 @@ Tip: you can use `--versions` to list all available versions.
     版本号信息地址： https://maven.aliyun.com/repository/public/com/taobao/arthas/arthas-packaging/maven-metadata.xml
 
 * 打上tag，push tag到仓库上
-* 需要更新 gh-pages 分支下面的 arthas-boot3.jar/math-game.jar/as3.sh ，下载 doc.zip，解压覆盖掉文档的更新
+* 需要更新 gh-pages 分支下面的 arthas-boot.jar/math-game.jar/as.sh ，下载 doc.zip，解压覆盖掉文档的更新，可以通过 github action 更新： https://github.com/alibaba/arthas/actions/workflows/update-doc.yaml
 * 需要更新docker镜像，push新的tag：https://hub.docker.com/r/hengyunabc/arthas/tags?page=1&ordering=last_updated
 
-    以 3.6.5 版本为例：
-    ```
-    docker buildx build . --build-arg ARTHAS_VERSION=3.6.5 --build-arg MIRROR=true -t hengyunabc/arthas:3.6.5 -t hengyunabc/arthas:latest --platform=linux/arm64,linux/amd64 --push 
+    可以通过 github action push： https://github.com/alibaba/arthas/actions/workflows/push-docker.yaml 
 
-    docker buildx build .  --build-arg ARTHAS_VERSION=3.6.5  --build-arg MIRROR=true -f Dockerfile-No-Jdk -t hengyunabc/arthas:3.6.5-no-jdk --platform=linux/arm64,linux/amd64  --push 
-    ```
 * 更新README.md，比如增加了新命令，要加上说明，更新wiki的链接
 * 更新release页面的 issue信息，修改信息等
 * 更新 https://arthas.aliyun.com/api/latest_version api

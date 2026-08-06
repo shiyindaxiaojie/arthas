@@ -7,11 +7,10 @@ import {MenuAlt2Icon} from "@heroicons/vue/outline"
 import fullPic from "~/assert/fullsc.png"
 import arthasLogo from "~/assert/arthas.png"
 import {useRouter} from 'vue-router'
-
-// const { isTunnel = false } = defineProps<{
-//   isTunnel?: boolean
-// }>()
-const isTunnel = import.meta.env.MODE === 'tunnel';
+const { isTunnel = false, isNativeAgent = false} = defineProps<{
+  isTunnel?: boolean
+  isNativeAgent?: boolean
+}>()
 let ws: WebSocket | undefined;
 let intervalReadKey = -1
 const DEFAULT_SCROLL_BACK = 1000
@@ -23,6 +22,7 @@ const port = ref('')
 const iframe = ref(true)
 const fullSc = ref(true)
 const agentID = ref('')
+const nativeAgentAddress = ref('')
 const outputHerf = computed(() => {
   console.log(agentID.value)
   return isTunnel ? `proxy/${agentID.value}/arthas-output/` : `/arthas-output/`
@@ -35,6 +35,7 @@ let xterm = new Terminal({allowProposedApi: true})
 onMounted(() => {
   ip.value = getUrlParam('ip') ?? window.location.hostname;
   port.value = getUrlParam('port') ?? ARTHAS_PORT;
+  if (isNativeAgent) nativeAgentAddress.value = getUrlParam("nativeAgentAddress") ?? ""
   if (isTunnel) agentID.value = getUrlParam("agentId") ?? ""
   let _iframe = getUrlParam('iframe')
   if (_iframe && _iframe.trim() !== 'false') iframe.value = false
@@ -57,6 +58,7 @@ function getUrlParam(name: string) {
 
 function getWsUri() {
   const host = `${ip.value}:${port.value}`
+  if (isNativeAgent) return `ws://${host}/ws?nativeAgentAddress=${nativeAgentAddress.value}`;
   if (!isTunnel) return `ws://${host}/ws`;
   const path = getUrlParam("path") ?? 'ws'
   const _targetServer = getUrlParam("targetServer")
@@ -216,14 +218,30 @@ function logout() {
   router.push('/login');
 }
 
+interface AgentInfo {
+  host: string
+  port: number
+  arthasVersion?: string
+}
+
+interface Agent {
+  id: string
+  info: AgentInfo
+}
+
+interface AgentGroup {
+  service: string
+  agents: Agent[]
+}
+
 const apps: string[] = reactive([])
-const services = ref([])
+const services = ref<AgentGroup[]>([])
 const selectedService = ref('')
-const selectedAgents = ref([])
+const selectedAgents = ref<Agent[]>([])
 
 const loadServices = async () => {
   services.value = await fetchAgentGroup()
-      .then(data => data.map((item: { service: any; agents: any; }) => ({service: item.service, agents: item.agents})))
+      .then(data => data.map(item => ({service: item.service, agents: item.agents})))
 }
 
 const getSelectedAgents = () => {
@@ -249,7 +267,7 @@ watchEffect(() => {
   }
 })
 
-const fetchAgentGroup = async () => {
+const fetchAgentGroup = async (): Promise<AgentGroup[]> => {
   const token = sessionStorage.getItem('token');
   try {
     const response = await fetch('/api/arthas/agents',
@@ -260,9 +278,10 @@ const fetchAgentGroup = async () => {
           }
         }
     );
-    return await response.json();
+    return await response.json() as AgentGroup[];
   } catch (error) {
     console.error(error);
+    return [];
   }
 }
 
@@ -281,13 +300,13 @@ onMounted(() => {
           </label>
           <ul tabindex="0" class="dropdown-content menu shadow bg-base-100">
             <li>
-              <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/3.x/doc"
+              <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/doc"
                  target="_blank">文档
                 <span class="sr-only">(current)</span></a>
             </li>
             <li>
               <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm"
-                 href="https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html" target="_blank">教程</a>
+                 href="https://arthas.aliyun.com/doc/arthas-tutorials.html" target="_blank">教程</a>
             </li>
             <li>
               <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://github.com/alibaba/arthas"
@@ -297,16 +316,16 @@ onMounted(() => {
         </div>
         <a href="https://github.com/alibaba/arthas" target="_blank" title="" class="mr-2 w-20"><img
             :src="arthasLogo" alt="Arthas" title="Welcome to Arthas web console"></a>
-        <span class="navbar-version" style="font-size: 18px;margin-right: 30px">v3.7.3</span>
+        <span class="navbar-version" style="font-size: 18px;margin-right: 30px">v4.3.2</span>
         <ul class="menu menu-vertical 2xl:menu-horizontal hidden">
           <li>
-            <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/3.x/doc"
+            <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://arthas.aliyun.com/doc"
                target="_blank">文档
               <span class="sr-only">(current)</span></a>
           </li>
           <li>
             <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm"
-               href="https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html" target="_blank">教程</a>
+               href="https://arthas.aliyun.com/doc/arthas-tutorials.html" target="_blank">教程</a>
           </li>
           <li>
             <a class="hover:text-sky-500 dark:hover:text-sky-400 text-sm" href="https://github.com/alibaba/arthas"

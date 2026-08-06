@@ -79,8 +79,20 @@ The return result of the `getInstances` action is bound to the `instances` varia
 :::
 
 ```bash
-vmtool --action getInstances --classLoaderClass org.springframework.boot.loader.LaunchedURLClassLoader --className org.springframework.context.ApplicationContext --express'instances[0].getBeanDefinitionNames()'
+vmtool --action getInstances --classLoaderClass org.springframework.boot.loader.LaunchedURLClassLoader --className org.springframework.context.ApplicationContext --express 'instances[0].getBeanDefinitionNames()'
 ```
+
+### Filter objects
+
+For the `instances` array returned by `getInstances`, you can further filter objects with the OGNL selection expression `.{? condition}`. Here `#this` refers to the current object being evaluated.
+
+The following example uses `java.lang.Thread`, which is suitable for verifying filter expressions in almost any running JVM. It filters all non-daemon threads and prints only their names:
+
+```bash
+vmtool --action getInstances --className java.lang.Thread --limit -1 --express 'instances.{? #this.daemon == false}.{name}'
+```
+
+If you want to inspect the filtered objects directly, remove the trailing `.{name}`.
 
 ## Force GC
 
@@ -90,10 +102,67 @@ vmtool --action forceGc
 
 - Use the [`vmoption`](vmoption.md) command to dynamically turn on the `PrintGC` option.
 
+## Analyze heap usage
+
+`heapAnalyze` starts from objects reachable from GC Root, counts instance numbers and bytes per class, and prints the top objects/classes by heap usage.
+
+```bash
+$ vmtool --action heapAnalyze --classNum 5 --objectNum 3
+```
+
+::: tip
+Use `--classNum` to specify how many classes will be shown, and use `--objectNum` to specify how many objects will be shown.
+:::
+
+## Analyze reference chain
+
+`referenceAnalyze` analyzes instances of a specific class and prints the largest objects and their backtrace chain (from the object back to GC Root) to help locate them.
+
+```bash
+$ vmtool --action referenceAnalyze --className java.lang.String --objectNum 5 --backtraceNum 3
+```
+
+::: tip
+
+- Use `--objectNum` to specify how many objects will be shown
+- Use `--backtraceNum` to specify how many steps of backtrace will be done, set `-1` to backtrace until root, set `0` to disable backtrace output
+- `--backtraceNum` values less than `-1` are invalid
+- `--classLoaderClass` and `--classloader` from `getInstances` are also applicable here
+  :::
+
 ## interrupt 指定线程
 
 The thread id is specified by the `-t` parameter. It can be obtained using the `thread` command.
 
 ```bash
 vmtool --action interruptThread -t 1
+```
+
+## glibc Release Free Memory
+
+Linux man page: [malloc_trim](https://man7.org/linux/man-pages/man3/malloc_trim.3.html)
+
+```bash
+vmtool --action mallocTrim
+```
+
+## glibc Memory Status
+
+The memory status will be output to the application's stderr. Linux man page: [malloc_stats](https://man7.org/linux/man-pages/man3/malloc_stats.3.html)
+
+```bash
+vmtool --action mallocStats
+```
+
+The output to stderr is as follows:
+
+```
+Arena 0:
+system bytes     =     135168
+in use bytes     =      74352
+Total (incl. mmap):
+system bytes     =     135168
+in use bytes     =      74352
+max mmap regions =          0
+max mmap bytes   =          0
 ```

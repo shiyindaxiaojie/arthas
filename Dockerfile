@@ -1,6 +1,6 @@
-FROM openjdk:8-jdk-alpine
+FROM amazoncorretto:8-alpine-jdk
 
-ARG ARTHAS_VERSION="3.7.3"
+ARG ARTHAS_VERSION="4.3.2"
 ARG MIRROR=false
 
 ENV MAVEN_HOST=https://repo1.maven.org/maven2 \

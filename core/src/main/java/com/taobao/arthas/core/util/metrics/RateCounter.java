@@ -2,8 +2,7 @@ package com.taobao.arthas.core.util.metrics;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
-
-import com.taobao.arthas.core.util.ThreadLocalRandom;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <pre>
@@ -69,6 +68,9 @@ public class RateCounter {
             sum += values.get(i);
         }
 
+        if (countLength == 0) {
+            return 0.0;
+        }
         return sum / (double) countLength;
     }
 

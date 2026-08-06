@@ -38,7 +38,7 @@ public class ClassUtils {
     }
 
     public static boolean isLambdaClass(Class<?> clazz) {
-        return clazz.getName().contains("$$Lambda$");
+        return clazz.isSynthetic() && clazz.getName().contains("$$Lambda");
     }
 
     public static Element renderClassInfo(ClassDetailVO clazz) {
@@ -196,6 +196,16 @@ public class ClassUtils {
         ClassLoader parent = classLoader == null ? null : classLoader.getParent();
         classLoaderVO.setParent(parent==null?null:parent.toString());
         return classLoaderVO;
+    }
+
+    public static String formatClassLoaderText(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replace("\r\n", "\\n")
+                .replace("\r", "\\n")
+                .replace("\n", "\\n")
+                .replace("\t", "    ");
     }
 
     public static List<ClassLoaderVO> createClassLoaderVOList(Collection<ClassLoader> classLoaders) {

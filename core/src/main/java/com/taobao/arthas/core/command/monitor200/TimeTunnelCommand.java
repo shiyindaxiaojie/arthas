@@ -9,11 +9,7 @@ import com.taobao.arthas.core.advisor.ArthasMethod;
 import com.taobao.arthas.core.command.Constants;
 import com.taobao.arthas.core.command.express.ExpressException;
 import com.taobao.arthas.core.command.express.ExpressFactory;
-import com.taobao.arthas.core.command.model.MessageModel;
-import com.taobao.arthas.core.command.model.ObjectVO;
-import com.taobao.arthas.core.command.model.RowAffectModel;
-import com.taobao.arthas.core.command.model.TimeFragmentVO;
-import com.taobao.arthas.core.command.model.TimeTunnelModel;
+import com.taobao.arthas.core.command.model.*;
 import com.taobao.arthas.core.shell.command.CommandProcess;
 import com.taobao.arthas.core.shell.handlers.command.CommandInterruptHandler;
 import com.taobao.arthas.core.shell.handlers.shell.QExitHandler;
@@ -22,14 +18,10 @@ import com.taobao.arthas.core.util.SearchUtils;
 import com.taobao.arthas.core.util.StringUtils;
 import com.taobao.arthas.core.util.affect.RowAffect;
 import com.taobao.arthas.core.util.matcher.Matcher;
-import com.taobao.middleware.cli.annotations.Description;
-import com.taobao.middleware.cli.annotations.Name;
-import com.taobao.middleware.cli.annotations.Option;
-import com.taobao.middleware.cli.annotations.Summary;
-import com.taobao.middleware.cli.annotations.Argument;
+import com.taobao.middleware.cli.annotations.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +68,7 @@ public class TimeTunnelCommand extends EnhancerCommand {
     // expand of TimeTunnel
     private Integer expand = 1;
     // upper size limit
-    private Integer sizeLimit = 10 * 1024 * 1024;
+    private Integer sizeLimit;
     // watch the index TimeTunnel
     private String watchExpress = com.taobao.arthas.core.util.Constants.EMPTY_STRING;
     private String searchExpress = com.taobao.arthas.core.util.Constants.EMPTY_STRING;
@@ -139,9 +131,16 @@ public class TimeTunnelCommand extends EnhancerCommand {
     }
 
     @Option(shortName = "M", longName = "sizeLimit")
-    @Description("Upper size limit in bytes for the result (10 * 1024 * 1024 by default)")
+    @Description("Upper size limit in bytes for the result (must be greater than 0, default value comes from options object-size-limit)")
     public void setSizeLimit(Integer sizeLimit) {
         this.sizeLimit = sizeLimit;
+    }
+
+    @Override
+    @Option(shortName = "c", longName = "classloader")
+    @Description("The hash code of the special class's classLoader")
+    public void setHashCode(String hashCode) {
+        super.setHashCode(hashCode);
     }
 
     @Option(shortName = "w", longName = "watch-express")
@@ -235,10 +234,22 @@ public class TimeTunnelCommand extends EnhancerCommand {
         return !StringUtils.isEmpty(searchExpress);
     }
 
+    static String validateSizeLimit(Integer sizeLimit) {
+        if (sizeLimit != null && sizeLimit.intValue() <= 0) {
+            return "sizeLimit must be greater than 0.";
+        }
+        return null;
+    }
+
     /**
      * 检查参数是否合法
      */
     private void checkArguments() {
+        String validateError = validateSizeLimit(sizeLimit);
+        if (validateError != null) {
+            throw new IllegalArgumentException(validateError);
+        }
+
         // 检查d/p参数是否有i参数配套
         if ((isDelete || isPlay) && null == index) {
             throw new IllegalArgumentException("Time fragment index is expected, please type -i to specify");
@@ -513,7 +524,7 @@ public class TimeTunnelCommand extends EnhancerCommand {
 
                 //copy from tt record
                 TimeFragmentVO replayResult = createTimeFragmentVO(index, tf, expand);
-                replayResult.setTimestamp(new Date())
+                replayResult.setTimestamp(LocalDateTime.now())
                         .setCost(0)
                         .setReturn(false)
                         .setReturnObj(null)

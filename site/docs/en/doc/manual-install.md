@@ -74,7 +74,6 @@ as-service.bat -remove
 If you fail to boot Arthas with the provided batch file, you could try to assemble the bootstrap command in the following way.
 
 1. Locate java in the target JVM:
-
    - Linux/Unix/Mac: `ps aux | grep java`
    - Windows: open the Process Monitor to search java
 
@@ -92,7 +91,6 @@ If you fail to boot Arthas with the provided batch file, you could try to assemb
    ```
 
    Note:
-
    - `-Xbootclasspath` adds tools.jar
    - `-jar /tmp/arthas-packaging/arthas-core.jar` specifies main entry
    - `-pid 15146` specifies the target java process PID

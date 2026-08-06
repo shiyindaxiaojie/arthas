@@ -22,7 +22,7 @@
         <arthas.version>3.6.6</arthas.version>
         <spring-cloud.version>3.0.1</spring-cloud.version>
         <spring-cloud-alibaba.version>2021.1</spring-cloud-alibaba.version>
-        <lombok.version>1.18.18</lombok.version>
+        <lombok.version>1.18.36</lombok.version>
         <disruptor.version>3.4.4</disruptor.version>
         <micrometer.version>1.9.4</micrometer.version>
         <build.layers.enabled>false</build.layers.enabled>

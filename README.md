@@ -8,13 +8,13 @@
 
 # Arthas 在线诊断工具
 
-![](https://cdn.jsdelivr.net/gh/shiyindaxiaojie/images/readme/language-java-blue.svg) [![](https://cdn.jsdelivr.net/gh/shiyindaxiaojie/images/readme/license-apache2.0-red.svg)][license-apache2.0] [![](https://github.com/shiyindaxiaojie/arthas/actions/workflows/maven-ci.yml/badge.svg?branch=3.x)][github-action] [![](https://sonarcloud.io/api/project_badges/measure?project=shiyindaxiaojie_arthas&metric=alert_status)][sonarcloud-dashboard] [<img src="https://api.gitsponsors.com/api/badge/img?id=414157707" height="20">](https://api.gitsponsors.com/api/badge/link?p=0lg65q7dB02AD42w0efoIlchLxkV2cxrueMbg4A8gk7J+U2lUkH4+6z+XlObMVpe3jts2mZcgZS2LwduRv5p9cwivKWG0uo0LvfEQaMwE1ySl63XTqYgB56b20XfMyXHr9yYvnHCPYtxDq89eA+AJQ==)
+![](https://cdn.jsdelivr.net/gh/shiyindaxiaojie/images/readme/language-java-blue.svg) [![](https://cdn.jsdelivr.net/gh/shiyindaxiaojie/images/readme/license-apache2.0-red.svg)][license-apache2.0] [![](https://github.com/shiyindaxiaojie/arthas/actions/workflows/maven-ci.yml/badge.svg?branch=4.x)][github-action] [![](https://sonarcloud.io/api/project_badges/measure?project=shiyindaxiaojie_arthas&metric=alert_status)][sonarcloud-dashboard] [<img src="https://api.gitsponsors.com/api/badge/img?id=414157707" height="20">](https://api.gitsponsors.com/api/badge/link?p=0lg65q7dB02AD42w0efoIlchLxkV2cxrueMbg4A8gk7J+U2lUkH4+6z+XlObMVpe3jts2mZcgZS2LwduRv5p9cwivKWG0uo0LvfEQaMwE1ySl63XTqYgB56b20XfMyXHr9yYvnHCPYtxDq89eA+AJQ==)
 
 Arthas 是阿里巴巴开源的在线诊断工具，提供了 `Dashboard 负载总览`、`Thread 线程占用`、`Stack 堆栈查看`、`Watch 性能观测` 等功能。笔者参考原作者 [@wf2311](https://github.com/wf2311/arthas-ext) 的实现进行了优化：
 1. 服务发现：自动获取接入的应用列表 IP 和端口，无须手动输入 AgentId
 2. 权限控制：基于 Spring Security 实现登录控制，并支持 Nacos 动态绑定账号与服务
 
-> 本文档只介绍 `arthas-tunnel-server` 项目，其他细节请查阅 [官方 3.x 文档](https://arthas.aliyun.com/3.x/doc/)。
+> 本文档只介绍 `arthas-tunnel-server` 项目，其他细节请查阅 [官方 4.x 文档](https://arthas.aliyun.com/doc/)。
 
 ## 演示图例
 
@@ -124,4 +124,4 @@ arthas: # 在线诊断工具
 
 ## 变更日志
 
-请查阅 [CHANGELOG.md](https://github.com/shiyindaxiaojie/arthas/blob/3.x/CHANGELOG.md)
+请查阅 [CHANGELOG.md](https://github.com/shiyindaxiaojie/arthas/blob/4.x/CHANGELOG.md)

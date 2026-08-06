@@ -1,7 +1,7 @@
 # Arthas Spring Boot Starter
 
 ::: tip
-Support spring boot 2
+Arthas 3.7.2 and later support both Spring Boot 2 and Spring Boot 3.
 :::
 
 Latest Version: [View](https://search.maven.org/search?q=arthas-spring-boot-starter)
@@ -25,7 +25,11 @@ For example, by configuring the tunnel server for remote management.
 ```
 arthas.agent-id=hsehdfsfghhwertyfad
 arthas.tunnel-server=ws://47.75.156.201:7777/ws
+arthas.command-locations=/opt/arthas/ext-command.jar,/opt/arthas/ext-commands
 ```
+
+Spring Boot relaxed binding accepts both `arthas.command-locations` and `arthas.commandLocations`;
+`arthas.command-locations` is recommended in Spring Boot configuration files.
 
 All supported configuration: [Reference](https://github.com/alibaba/arthas/blob/master/arthas-spring-boot-starter/src/main/java/com/alibaba/arthas/spring/ArthasProperties.java)
 

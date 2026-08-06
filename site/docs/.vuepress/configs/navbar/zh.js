@@ -24,8 +24,8 @@ export const navbarZH = [
     text: "版本",
     children: [
       {
-        text: "v4.x",
-        link: "https://arthas.aliyun.com/",
+        text: "v3.x",
+        link: "https://arthas.aliyun.com/3.x/",
       },
     ],
   },

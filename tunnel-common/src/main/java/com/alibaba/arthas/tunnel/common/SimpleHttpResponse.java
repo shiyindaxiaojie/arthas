@@ -60,36 +60,25 @@ public class SimpleHttpResponse implements Serializable {
 
     public static byte[] toBytes(SimpleHttpResponse response) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-        try {
-            out = new ObjectOutputStream(bos);
+        try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
             out.writeObject(response);
             out.flush();
             return bos.toByteArray();
-        } finally {
-            if (out != null) {
-                out.close();
-            }
         }
     }
 
     public static SimpleHttpResponse fromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
         ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        ObjectInputStream in = null;
-        try {
-            in = new ObjectInputStream(bis) {
-                protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-                    if (!whitelist.contains(desc.getName())) {
-                        throw new InvalidClassException("Unauthorized deserialization attempt", desc.getName());
-                    }
-                    return super.resolveClass(desc);
+        try (ObjectInputStream in = new ObjectInputStream(bis) {
+            protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+                if (!whitelist.contains(desc.getName())) {
+                    throw new InvalidClassException("Unauthorized deserialization attempt", desc.getName());
                 }
-            };
-            return (SimpleHttpResponse) in.readObject();
-        } finally {
-            if (in != null) {
-                in.close();
+                return super.resolveClass(desc);
             }
+        }) {
+            return (SimpleHttpResponse) in.readObject();
         }
     }
+
 }

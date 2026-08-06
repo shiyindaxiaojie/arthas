@@ -16,8 +16,9 @@
 |    _method-pattern_ | 方法名表达式匹配                                                   |
 | _condition-express_ | 条件表达式                                                         |
 |                 [E] | 开启正则表达式匹配，默认为通配符匹配                               |
-|              `[n:]` | 命令执行次数                                                       |
+|              `[n:]` | 命令执行次数，默认值为 100。                                       |
 |             `#cost` | 方法执行耗时                                                       |
+|              `[c:]` | 指定 classloader hash，只增强该 classloader 加载的类               |
 |         `[m <arg>]` | 指定 Class 最大匹配数量，默认值为 50。长格式为`[maxMatch <arg>]`。 |
 
 这里重点要说明的是`条件表达式`，`条件表达式`的构成主要由 ognl 表达式组成，所以你可以这样写`"params[0]<0"`，只要是一个合法的 ognl 表达式，都能被正常支持。
@@ -25,7 +26,7 @@
 请参考[表达式核心变量](advice-class.md)中关于该节点的描述。
 
 - 特殊用法请参考：[https://github.com/alibaba/arthas/issues/71](https://github.com/alibaba/arthas/issues/71)
-- OGNL 表达式官网：[https://commons.apache.org/proper/commons-ognl/language-guide.html](https://commons.apache.org/proper/commons-ognl/language-guide.html)
+- OGNL 表达式官网：[https://commons.apache.org/dormant/commons-ognl/language-guide.html](https://commons.apache.org/dormant/commons-ognl/language-guide.html)
 
 很多时候我们只想看到某个方法的 rt 大于某个时间之后的 trace 结果，现在 Arthas 可以按照方法执行的耗时来进行过滤了，例如`trace *StringUtils isBlank '#cost>100'`表示当执行时间超过 100ms 的时候，才会输出 trace 的结果。
 
@@ -81,6 +82,15 @@ Affect(class count: 1 , method count: 1) cost in 412 ms, listenerId: 4
 `---ts=2022-12-25 21:00:10;thread_name=main;id=1;is_daemon=false;priority=5;TCCL=sun.misc.Launcher$AppClassLoader@b4aac2
     `---[0.315298ms] demo.MathGame:run()
         `---[13.95% 0.043995ms] demo.MathGame:primeFactors() #46 [throws Exception]
+```
+
+### 指定 ClassLoader 增强
+
+当同名类被多个 classloader 加载时，可以先用 `sc -d` 查看 classloader hash，然后用 `-c` 指定增强的 classloader：
+
+```bash
+sc -d com.example.Foo
+trace -c 3d4eac69 com.example.Foo bar
 ```
 
 ### trace 次数限制

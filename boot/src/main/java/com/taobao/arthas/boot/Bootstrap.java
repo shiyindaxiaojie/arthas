@@ -26,7 +26,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
 import com.taobao.arthas.common.AnsiLog;
-import com.taobao.arthas.common.JavaVersionUtils;
 import com.taobao.arthas.common.SocketUtils;
 import com.taobao.arthas.common.UsageRender;
 import com.taobao.middleware.cli.CLI;
@@ -45,21 +44,23 @@ import com.taobao.middleware.cli.annotations.Summary;
  */
 @Name("arthas-boot")
 @Summary("Bootstrap Arthas")
-@Description("EXAMPLES:\n" + "  java -jar arthas-boot3.jar <pid>\n"
-                + "  java -jar arthas-boot3.jar --telnet-port 9999 --http-port -1\n"
-                + "  java -jar arthas-boot3.jar --username admin --password <password>\n"
-                + "  java -jar arthas-boot3.jar --tunnel-server 'ws://192.168.10.11:7777/ws' --app-name demoapp\n"
-                + "  java -jar arthas-boot3.jar --tunnel-server 'ws://192.168.10.11:7777/ws' --agent-id bvDOe8XbTM2pQWjF4cfw\n"
-                + "  java -jar arthas-boot3.jar --stat-url 'http://192.168.10.11:8080/api/stat'\n"
-                + "  java -jar arthas-boot3.jar -c 'sysprop; thread' <pid>\n"
-                + "  java -jar arthas-boot3.jar -f batch.as <pid>\n"
-                + "  java -jar arthas-boot3.jar --use-version 3.7.3\n"
-                + "  java -jar arthas-boot3.jar --versions\n"
-                + "  java -jar arthas-boot3.jar --select math-game\n"
-                + "  java -jar arthas-boot3.jar --session-timeout 3600\n" + "  java -jar arthas-boot3.jar --attach-only\n"
-                + "  java -jar arthas-boot3.jar --disabled-commands stop,dump\n"
-                + "  java -jar arthas-boot3.jar --repo-mirror aliyun --use-http\n" + "WIKI:\n"
-                + "  https://arthas.aliyun.com/3.x/doc\n")
+@Description("NOTE: Arthas 4 supports JDK 8+. If you need to diagnose applications running on JDK 6/7, you can use Arthas 3.\n\n"
+                +"EXAMPLES:\n" + "  java -jar arthas-boot.jar <pid>\n"
+                + "  java -jar arthas-boot.jar --telnet-port 9999 --http-port -1\n"
+                + "  java -jar arthas-boot.jar --username admin --password <password>\n"
+                + "  java -jar arthas-boot.jar --tunnel-server 'ws://192.168.10.11:7777/ws' --app-name demoapp\n"
+                + "  java -jar arthas-boot.jar --tunnel-server 'ws://192.168.10.11:7777/ws' --agent-id bvDOe8XbTM2pQWjF4cfw\n"
+                + "  java -jar arthas-boot.jar --stat-url 'http://192.168.10.11:8080/api/stat'\n"
+                + "  java -jar arthas-boot.jar -c 'sysprop; thread' <pid>\n"
+                + "  java -jar arthas-boot.jar -f batch.as <pid>\n"
+                + "  java -jar arthas-boot.jar --use-version 4.3.2\n"
+                + "  java -jar arthas-boot.jar --versions\n"
+                + "  java -jar arthas-boot.jar --select math-game\n"
+                + "  java -jar arthas-boot.jar --session-timeout 3600\n" + "  java -jar arthas-boot.jar --attach-only\n"
+                + "  java -jar arthas-boot.jar --disabled-commands stop,dump\n"
+                + "  java -jar arthas-boot.jar --command-locations '/opt/arthas/ext-command.jar,/opt/arthas/ext-commands'\n"
+                + "  java -jar arthas-boot.jar --repo-mirror aliyun\n" + "WIKI:\n"
+                + "  https://arthas.aliyun.com/doc\n")
 public class Bootstrap {
     private static final int DEFAULT_TELNET_PORT = 3658;
     private static final int DEFAULT_HTTP_PORT = 8563;
@@ -86,7 +87,7 @@ public class Bootstrap {
      * <pre>
      * The directory contains arthas-core.jar/arthas-client.jar/arthas-spy.jar.
      * 1. When use-version is not empty, try to find arthas home under ~/.arthas/lib
-     * 2. Try set the directory where arthas-boot3.jar is located to arthas home
+     * 2. Try set the directory where arthas-boot.jar is located to arthas home
      * 3. Try to download from remote repo
      * </pre>
      */
@@ -107,11 +108,6 @@ public class Bootstrap {
      */
     private String repoMirror;
 
-    /**
-     * enforce use http to download arthas. default use https
-     */
-    private boolean useHttp = false;
-
     private boolean attachOnly = false;
 
     private String command;
@@ -130,6 +126,7 @@ public class Bootstrap {
     private String select;
 
     private String disabledCommands;
+    private String commandLocations;
 
 	static {
         String arthasLibDirEnv = System.getenv("ARTHAS_LIB_DIR");
@@ -191,7 +188,7 @@ public class Bootstrap {
     }
 
     @Option(longName = "session-timeout")
-    @Description("The session timeout seconds, default 1800 (30min)")
+    @Description("The session timeout seconds, default 10800 (3h)")
     public void setSessionTimeout(Long sessionTimeout) {
         this.sessionTimeout = sessionTimeout;
     }
@@ -218,12 +215,6 @@ public class Bootstrap {
     @Description("List local and remote arthas versions")
     public void setVersions(boolean versions) {
         this.versions = versions;
-    }
-
-    @Option(longName = "use-http", flag = true)
-    @Description("Enforce use http to download, default use https")
-    public void setuseHttp(boolean useHttp) {
-        this.useHttp = useHttp;
     }
 
     @Option(longName = "attach-only", flag = true)
@@ -309,6 +300,12 @@ public class Bootstrap {
         this.disabledCommands = disabledCommands;
     }
 
+    @Option(longName = "command-locations")
+    @Description("external command jar locations, support jar file or directory, separated by comma")
+    public void setCommandLocations(String commandLocations) {
+        this.commandLocations = commandLocations;
+    }
+
     public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException,
                     ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException,
                     IllegalArgumentException, InvocationTargetException {
@@ -368,12 +365,6 @@ public class Bootstrap {
             System.exit(0);
         }
 
-        if (JavaVersionUtils.isJava6() || JavaVersionUtils.isJava7()) {
-            bootstrap.setuseHttp(true);
-            AnsiLog.debug("Java version is {}, only support http, set useHttp to true.",
-                            JavaVersionUtils.javaVersionStr());
-        }
-
         // check telnet/http port
         long telnetPortPid = -1;
         long httpPortPid = -1;
@@ -412,7 +403,7 @@ public class Bootstrap {
                             pid, bootstrap.getHttpPortOrDefault());
             AnsiLog.error("1. Try to restart arthas-boot, select process {}, shutdown it first with running the 'stop' command.",
                             httpPortPid);
-            AnsiLog.error("2. Or try to use different http port, for example: java -jar arthas-boot3.jar --telnet-port 9998 --http-port 9999");
+            AnsiLog.error("2. Or try to use different http port, for example: java -jar arthas-boot.jar --telnet-port 9998 --http-port 9999");
             System.exit(1);
         }
 
@@ -423,24 +414,19 @@ public class Bootstrap {
             arthasHomeDir = new File(bootstrap.getArthasHome());
         }
         if (arthasHomeDir == null && bootstrap.getUseVersion() != null) {
-            // exit when useVersion is not 3.x
-            if (!bootstrap.getUseVersion().startsWith("3")) {
-                AnsiLog.error("Arthas version {} is not supported; only version 3.x is supported.", bootstrap.getUseVersion());
-                System.exit(1);
-            }
             // try to find from ~/.arthas/lib
             File specialVersionDir = new File(System.getProperty("user.home"), ".arthas" + File.separator + "lib"
                             + File.separator + bootstrap.getUseVersion() + File.separator + "arthas");
             if (!specialVersionDir.exists()) {
                 // try to download arthas from remote server.
-                DownloadUtils.downArthasPackaging(bootstrap.getRepoMirror(), bootstrap.isuseHttp(),
-                                bootstrap.getUseVersion(), ARTHAS_LIB_DIR.getAbsolutePath());
+                DownloadUtils.downArthasPackaging(bootstrap.getRepoMirror(), bootstrap.getUseVersion(),
+                                ARTHAS_LIB_DIR.getAbsolutePath());
             }
             verifyArthasHome(specialVersionDir.getAbsolutePath());
             arthasHomeDir = specialVersionDir;
         }
 
-        // Try set the directory where arthas-boot3.jar is located to arthas home
+        // Try set the directory where arthas-boot.jar is located to arthas home
         if (arthasHomeDir == null) {
             CodeSource codeSource = Bootstrap.class.getProtectionDomain().getCodeSource();
             if (codeSource != null) {
@@ -466,25 +452,24 @@ public class Bootstrap {
 
             /**
              * <pre>
-             * 1. get local latest 3.x version
-             * 2. get remote latest 3.x version
+             * 1. get local latest version
+             * 2. get remote latest version
              * 3. compare two version
              * </pre>
              */
             List<String> versionList = listNames(ARTHAS_LIB_DIR);
+            Collections.sort(versionList);
 
-            String localLatest3xVersion = null;
-            for (String version : versionList) {
-                if (version.startsWith("3") && (localLatest3xVersion == null || version.compareTo(localLatest3xVersion) > 0)) {
-                    localLatest3xVersion = version;
-                }
+            String localLatestVersion = null;
+            if (!versionList.isEmpty()) {
+                localLatestVersion = versionList.get(versionList.size() - 1);
             }
 
-            String remoteLatest3xVersion = DownloadUtils.readLatest3xReleaseVersion();
+            String remoteLatestVersion = DownloadUtils.readLatestReleaseVersion();
 
             boolean needDownload = false;
-            if (localLatest3xVersion == null) {
-                if (remoteLatest3xVersion == null) {
+            if (localLatestVersion == null) {
+                if (remoteLatestVersion == null) {
                     // exit
                     AnsiLog.error("Can not find Arthas under local: {} and remote repo mirror: {}", ARTHAS_LIB_DIR,
                             bootstrap.getRepoMirror());
@@ -495,23 +480,23 @@ public class Bootstrap {
                     needDownload = true;
                 }
             } else {
-                if (remoteLatest3xVersion != null) {
-                    if (localLatest3xVersion.compareTo(remoteLatest3xVersion) < 0) {
-                        AnsiLog.info("local latest 3.x version: {}, remote latest 3.x version: {}, try to download from remote.",
-                                        localLatest3xVersion, remoteLatest3xVersion);
+                if (remoteLatestVersion != null) {
+                    if (localLatestVersion.compareTo(remoteLatestVersion) < 0) {
+                        AnsiLog.info("local latest version: {}, remote latest version: {}, try to download from remote.",
+                                localLatestVersion, remoteLatestVersion);
                         needDownload = true;
                     }
                 }
             }
             if (needDownload) {
                 // try to download arthas from remote server.
-                DownloadUtils.downArthasPackaging(bootstrap.getRepoMirror(), bootstrap.isuseHttp(),
-                                remoteLatest3xVersion, ARTHAS_LIB_DIR.getAbsolutePath());
-                localLatest3xVersion = remoteLatest3xVersion;
+                DownloadUtils.downArthasPackaging(bootstrap.getRepoMirror(), remoteLatestVersion,
+                        ARTHAS_LIB_DIR.getAbsolutePath());
+                localLatestVersion = remoteLatestVersion;
             }
 
-            // get the latest 3.x version
-            arthasHomeDir = new File(ARTHAS_LIB_DIR, localLatest3xVersion + File.separator + "arthas");
+            // get the latest version
+            arthasHomeDir = new File(ARTHAS_LIB_DIR, localLatestVersion + File.separator + "arthas");
         }
 
         verifyArthasHome(arthasHomeDir.getAbsolutePath());
@@ -589,6 +574,10 @@ public class Bootstrap {
                     attachArgs.add("-disabled-commands");
                     attachArgs.add(bootstrap.getDisabledCommands());
                 }
+                if (bootstrap.getCommandLocations() != null) {
+                    attachArgs.add("-command-locations");
+                    attachArgs.add(bootstrap.getCommandLocations());
+                }
 
                 AnsiLog.info("Try to attach process " + pid);
                 AnsiLog.debug("Start arthas-core.jar args: " + attachArgs);
@@ -646,7 +635,7 @@ public class Bootstrap {
             AnsiLog.error("1. Try to restart arthas-boot, select process {}, shutdown it first with running the 'stop' command.",
                             telnetPortPid);
             AnsiLog.error("2. Or try to stop the existing arthas instance: java -jar arthas-client.jar 127.0.0.1 {} -c \"stop\"", bootstrap.getTelnetPortOrDefault());
-            AnsiLog.error("3. Or try to use different telnet port, for example: java -jar arthas-boot3.jar --telnet-port 9998 --http-port -1");
+            AnsiLog.error("3. Or try to use different telnet port, for example: java -jar arthas-boot.jar --telnet-port 9998 --http-port -1");
             System.exit(1);
         }
     }
@@ -677,7 +666,7 @@ public class Bootstrap {
             }
             if (error != null) {
                 AnsiLog.error("The telnet port {} is used, but process {}, you will connect to an unexpected process.", telnetPort, error);
-                AnsiLog.error("Try to use a different telnet port, for example: java -jar arthas-boot3.jar --telnet-port 9998 --http-port -1");
+                AnsiLog.error("Try to use a different telnet port, for example: java -jar arthas-boot.jar --telnet-port 9998 --http-port -1");
                 System.exit(1);
             }
 
@@ -790,10 +779,6 @@ public class Bootstrap {
         return repoMirror;
     }
 
-    public boolean isuseHttp() {
-        return useHttp;
-    }
-
     public String getTargetIp() {
         return targetIp;
     }
@@ -900,5 +885,9 @@ public class Bootstrap {
 
     public String getDisabledCommands() {
         return disabledCommands;
+    }
+
+    public String getCommandLocations() {
+        return commandLocations;
     }
 }

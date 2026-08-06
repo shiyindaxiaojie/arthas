@@ -8,9 +8,7 @@ import ognl.ObjectPropertyAccessor;
 import ognl.OgnlException;
 
 /**
- * 
  * @author hengyunabc 2022-03-24
- *
  */
 public class ArthasObjectPropertyAccessor extends ObjectPropertyAccessor {
 

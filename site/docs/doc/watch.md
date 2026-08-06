@@ -24,6 +24,7 @@ watch 的参数比较多，主要是因为它能在 4 个不同的场景观察�
 |                 [f] | 在**函数结束之后**(正常返回和异常返回)观察                         |
 |                 [E] | 开启正则表达式匹配，默认为通配符匹配                               |
 |                [x:] | 指定输出结果的属性遍历深度，默认为 1，最大值是 4                   |
+|                [c:] | 指定 classloader hash，只增强该 classloader 加载的类               |
 |         `[m <arg>]` | 指定 Class 最大匹配数量，默认值为 50。长格式为`[maxMatch <arg>]`。 |
 
 这里重点要说明的是观察表达式，观察表达式的构成主要由 ognl 表达式组成，所以你可以这样写`"{params,returnObj}"`，只要是一个合法的 ognl 表达式，都能被正常支持。
@@ -31,7 +32,7 @@ watch 的参数比较多，主要是因为它能在 4 个不同的场景观察�
 观察的维度也比较多，主要体现在参数 `advice` 的数据结构上。`Advice` 参数最主要是封装了通知节点的所有信息。请参考[表达式核心变量](advice-class.md)中关于该节点的描述。
 
 - 特殊用法请参考：[https://github.com/alibaba/arthas/issues/71](https://github.com/alibaba/arthas/issues/71)
-- OGNL 表达式官网：[https://commons.apache.org/proper/commons-ognl/language-guide.html](https://commons.apache.org/proper/commons-ognl/language-guide.html)
+- OGNL 表达式官网：[https://commons.apache.org/dormant/commons-ognl/language-guide.html](https://commons.apache.org/dormant/commons-ognl/language-guide.html)
 
 **特别说明**：
 
@@ -106,6 +107,15 @@ ts=2022-12-25 19:58:51; [cost=0.046928ms] result=@ArrayList[
     @MathGame[demo.MathGame@3bf400],
     null,
 ]
+```
+
+### 指定 ClassLoader 增强
+
+当同名类被多个 classloader 加载时，可以先用 `sc -d` 查看 classloader hash，然后用 `-c` 指定增强的 classloader：
+
+```bash
+sc -d com.example.Foo
+watch -c 3d4eac69 com.example.Foo bar '{params,returnObj}'
 ```
 
 ### 观察函数调用入口的参数和返回值

@@ -40,7 +40,7 @@ export default defineComponent({
         errorMessage.value = '登录失败';
       }
       if (errorMessage.value) {
-        const errorMessageEl = document.querySelector('#errorMessage');
+        const errorMessageEl = document.querySelector<HTMLElement>('#errorMessage');
         if (errorMessageEl) {
           errorMessageEl.style.display = 'inline';
         }
@@ -48,7 +48,7 @@ export default defineComponent({
     }
 
     const hideErrorMessage = () => {
-      const errorMessageEl = document.querySelector('#errorMessage');
+      const errorMessageEl = document.querySelector<HTMLElement>('#errorMessage');
       if (errorMessageEl) {
         errorMessageEl.style.display = 'none';
       }

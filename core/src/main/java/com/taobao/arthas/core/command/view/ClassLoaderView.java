@@ -2,6 +2,7 @@ package com.taobao.arthas.core.command.view;
 
 import com.taobao.arthas.core.command.klass100.ClassLoaderCommand.ClassLoaderStat;
 import com.taobao.arthas.core.command.klass100.ClassLoaderCommand.ClassLoaderUrlStat;
+import com.taobao.arthas.core.command.klass100.ClassLoaderCommand.UrlClassStat;
 import com.taobao.arthas.core.command.model.ClassDetailVO;
 import com.taobao.arthas.core.command.model.ClassLoaderModel;
 import com.taobao.arthas.core.command.model.ClassLoaderVO;
@@ -16,6 +17,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import static com.taobao.arthas.core.util.ClassUtils.formatClassLoaderText;
 
 /**
  * @author gongdewei 2020/4/21
@@ -51,6 +54,76 @@ public class ClassLoaderView extends ResultView<ClassLoaderModel> {
         if (result.getUrlStats() != null) {
             drawUrlStats(process, result.getUrlStats());
         }
+        if (result.getUrlClassStats() != null) {
+            drawUrlClassStats(process, result.getClassLoader(), result.getUrlClassStats(),
+                    Boolean.TRUE.equals(result.getUrlClassStatsDetail()));
+        }
+    }
+
+    private void drawUrlClassStats(CommandProcess process, ClassLoaderVO classLoader, List<UrlClassStat> urlClassStats,
+            boolean detail) {
+        if (classLoader != null) {
+            process.write(formatClassLoaderText(classLoader.getName()) + ", hash:" + classLoader.getHash() + "\n");
+        }
+
+        boolean hasMatched = false;
+        for (UrlClassStat stat : urlClassStats) {
+            if (stat.getMatchedClassCount() != null) {
+                hasMatched = true;
+                break;
+            }
+        }
+
+        if (!detail) {
+            TableElement table = new TableElement().leftCellPadding(1).rightCellPadding(1);
+            RowElement header = new RowElement().style(Decoration.bold.bold());
+            if (hasMatched) {
+                header.add("url", "loadedClassCount", "matchedClassCount");
+            } else {
+                header.add("url", "loadedClassCount");
+            }
+            table.add(header);
+
+            for (UrlClassStat stat : urlClassStats) {
+                if (hasMatched) {
+                    table.row(stat.getUrl(), "" + stat.getLoadedClassCount(), "" + stat.getMatchedClassCount());
+                } else {
+                    table.row(stat.getUrl(), "" + stat.getLoadedClassCount());
+                }
+            }
+            process.write(RenderUtil.render(table, process.width()))
+                    .write(com.taobao.arthas.core.util.Constants.EMPTY_STRING);
+            return;
+        }
+
+        for (UrlClassStat stat : urlClassStats) {
+            TableElement table = new TableElement().leftCellPadding(1).rightCellPadding(1);
+
+            StringBuilder title = new StringBuilder();
+            title.append(stat.getUrl())
+                    .append(" (loaded: ").append(stat.getLoadedClassCount());
+            if (hasMatched) {
+                title.append(", matched: ").append(stat.getMatchedClassCount());
+            }
+            title.append(")");
+            table.row(new LabelElement(title.toString()).style(Decoration.bold.bold()));
+
+            List<String> classes = stat.getClasses();
+            if (classes != null) {
+                for (String className : classes) {
+                    table.row(className);
+                }
+            }
+
+            if (stat.isTruncated() && classes != null) {
+                int total = hasMatched ? stat.getMatchedClassCount() : stat.getLoadedClassCount();
+                table.row(new LabelElement("... (showing first " + classes.size() + " of " + total
+                        + ", use -n/--limit to change limit)"));
+            }
+
+            process.write(RenderUtil.render(table, process.width()))
+                    .write("\n");
+        }
     }
 
     private void drawUrlStats(CommandProcess process, Map<ClassLoaderVO, ClassLoaderUrlStat> urlStats) {
@@ -64,7 +137,7 @@ public class ClassLoaderView extends ResultView<ClassLoaderModel> {
             }
 
             TableElement table = new TableElement().leftCellPadding(1).rightCellPadding(1);
-            table.row(new LabelElement(classLoaderVO.getName() + ", hash:" + classLoaderVO.getHash())
+            table.row(new LabelElement(formatClassLoaderText(classLoaderVO.getName()) + ", hash:" + classLoaderVO.getHash())
                     .style(Decoration.bold.bold()));
             Collection<String> usedUrls = urlStat.getUsedUrls();
             table.row(new LabelElement("Used URLs:").style(Decoration.bold.bold()));
@@ -129,7 +202,8 @@ public class ClassLoaderView extends ResultView<ClassLoaderModel> {
     private Element renderClasses(ClassSetVO classSetVO) {
         TableElement table = new TableElement().leftCellPadding(1).rightCellPadding(1);
         if (classSetVO.getSegment() == 0) {
-            table.row(new LabelElement("hash:" + classSetVO.getClassloader().getHash() + ", " + classSetVO.getClassloader().getName())
+            table.row(new LabelElement("hash:" + classSetVO.getClassloader().getHash() + ", "
+                    + formatClassLoaderText(classSetVO.getClassloader().getName()))
                     .style(Decoration.bold.bold()));
         }
         for (String className : classSetVO.getClasses()) {
@@ -151,7 +225,8 @@ public class ClassLoaderView extends ResultView<ClassLoaderModel> {
         TableElement table = new TableElement().leftCellPadding(1).rightCellPadding(1);
         table.add(new RowElement().style(Decoration.bold.bold()).add("name", "loadedCount", "hash", "parent"));
         for (ClassLoaderVO classLoaderVO : classLoaderInfos) {
-            table.row(classLoaderVO.getName(), "" + classLoaderVO.getLoadedCount(), classLoaderVO.getHash(), classLoaderVO.getParent());
+            table.row(formatClassLoaderText(classLoaderVO.getName()), "" + classLoaderVO.getLoadedCount(),
+                    classLoaderVO.getHash(), formatClassLoaderText(classLoaderVO.getParent()));
         }
         return table;
     }
@@ -160,7 +235,7 @@ public class ClassLoaderView extends ResultView<ClassLoaderModel> {
     private static Element renderTree(Collection<ClassLoaderVO> classLoaderInfos) {
         TreeElement root = new TreeElement();
         for (ClassLoaderVO classLoader : classLoaderInfos) {
-            TreeElement child = new TreeElement(classLoader.getName());
+            TreeElement child = new TreeElement(formatClassLoaderText(classLoader.getName()));
             root.addChild(child);
             renderSubtree(child, classLoader);
         }
@@ -172,7 +247,7 @@ public class ClassLoaderView extends ResultView<ClassLoaderModel> {
             return;
         }
         for (ClassLoaderVO childClassLoader : parentClassLoader.getChildren()) {
-            TreeElement child = new TreeElement(childClassLoader.getName());
+            TreeElement child = new TreeElement(formatClassLoaderText(childClassLoader.getName()));
             parent.addChild(child);
             renderSubtree(child, childClassLoader);
         }

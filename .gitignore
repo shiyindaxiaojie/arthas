@@ -26,3 +26,9 @@ pom.xml.versionsBackup
 **/.idea/**
 **/cmake-build-debug/**
 /web-ui/node_modules/.yarn-integrity
+
+# VSCode
+.vscode/
+
+# integration-test (python/expect)
+integration-test/telnet-stop-leak/work*/

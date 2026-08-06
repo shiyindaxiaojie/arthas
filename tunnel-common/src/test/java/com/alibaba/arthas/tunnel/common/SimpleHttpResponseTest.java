@@ -36,18 +36,12 @@ public class SimpleHttpResponseTest {
         assertArrayEquals(response.getContent(), deserializedResponse.getContent());
     }
 
-    public static byte[] toBytes(Object response) throws IOException {
+    private static byte[] toBytes(Object object) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = null;
-        try {
-            out = new ObjectOutputStream(bos);
-            out.writeObject(response);
+        try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(object);
             out.flush();
             return bos.toByteArray();
-        } finally {
-            if (out != null) {
-                out.close();
-            }
         }
     }
 

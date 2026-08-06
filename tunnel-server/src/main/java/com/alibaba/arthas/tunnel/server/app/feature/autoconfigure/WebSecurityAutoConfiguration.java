@@ -4,7 +4,6 @@ import com.alibaba.arthas.tunnel.server.app.configuration.ArthasProperties;
 import com.alibaba.arthas.tunnel.server.app.feature.env.SecurityProperties;
 import com.alibaba.arthas.tunnel.server.app.feature.web.security.handler.ForbiddenAccessDeniedHandler;
 import com.alibaba.arthas.tunnel.server.app.feature.web.security.handler.UnauthorizedEntryPoint;
-import com.alibaba.arthas.tunnel.server.app.feature.web.security.jwt.config.JwtSecurityConfigurer;
 import com.alibaba.arthas.tunnel.server.app.feature.web.security.jwt.filter.JwtAuthorizationFilter;
 import com.alibaba.arthas.tunnel.server.app.feature.web.security.jwt.token.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -13,14 +12,17 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
@@ -30,13 +32,13 @@ import org.springframework.web.filter.CorsFilter;
  * @author <a href="mailto:shiyindaxiaojie@gmail.com">gyl</a>
  * @since 2.4.13
  */
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true)
 @EnableWebSecurity
 @EnableConfigurationProperties(SecurityProperties.class)
 @RequiredArgsConstructor
 @Slf4j
 @Configuration(proxyBeanMethods = false)
-public class WebSecurityAutoConfiguration extends WebSecurityConfigurerAdapter {
+public class WebSecurityAutoConfiguration {
 
     private final ArthasProperties arthasProperties;
 
@@ -48,49 +50,38 @@ public class WebSecurityAutoConfiguration extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
 
-    @Override
-    protected void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf().disable()
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
+                                                   AuthenticationManager authenticationManager) throws Exception {
+        httpSecurity
+                .csrf(AbstractHttpConfigurer::disable)
+                .authenticationManager(authenticationManager)
                 .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling()
-                .authenticationEntryPoint(new UnauthorizedEntryPoint())
-                .accessDeniedHandler(new ForbiddenAccessDeniedHandler())
-                .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .httpBasic()
-                .and()
-                .apply(securityConfigurationAdapter());
-
-        httpSecurity.authorizeRequests()
-                .antMatchers("/api/auth").permitAll()
-                .antMatchers("/api/**").authenticated()
-                .anyRequest().permitAll();
+                .addFilterBefore(new JwtAuthorizationFilter(jwtTokenProvider),
+                        UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(new UnauthorizedEntryPoint())
+                        .accessDeniedHandler(new ForbiddenAccessDeniedHandler()))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(Customizer.withDefaults())
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/api/auth").permitAll()
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll());
 
         // allow iframe
         if (arthasProperties.isEnableIframeSupport()) {
-            httpSecurity.headers().frameOptions().disable();
+            httpSecurity.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
         }
+
+        return httpSecurity.build();
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
-
-    @Override
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
-    }
-
-    @Override
-    protected UserDetailsService userDetailsService() {
-        return userDetailsService;
-    }
-
-    private JwtSecurityConfigurer securityConfigurationAdapter() {
-        JwtAuthorizationFilter filter = new JwtAuthorizationFilter(jwtTokenProvider);
-        return new JwtSecurityConfigurer(filter);
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+        return new ProviderManager(authenticationProvider);
     }
 }

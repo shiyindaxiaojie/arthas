@@ -1,6 +1,6 @@
 # tt
 
-[`tt` online tutorial](https://arthas.aliyun.com/3.x/doc/arthas-tutorials.html?language=en&id=command-tt)
+[`tt` online tutorial](https://arthas.aliyun.com/doc/arthas-tutorials.html?language=en&id=command-tt)
 
 Check the `parameters`, `return values` and `exceptions` of the methods at different times.
 
@@ -60,6 +60,10 @@ Affect(class count:1 , method count:1) cost in 130 ms, listenerId: 1.
 
   limit the number of matched Classes to avoid JVM suspending when too many matched Classes. The default value is 50.
 
+- `-c <classloader hash>`
+
+  if the same class is loaded by multiple classloaders, you can use `-c` to enhance only the specified classloader. Use `sc -d className` to find the classloader hash.
+
 - Property
 
 | Name      | Specification                                  |
@@ -85,7 +89,7 @@ Advanced:
 
 - [Critical fields in expression](advice-class.md)
 - [Special usage](https://github.com/alibaba/arthas/issues/71)
-- [OGNL official guide](https://commons.apache.org/proper/commons-ognl/language-guide.html)
+- [OGNL official guide](https://commons.apache.org/dormant/commons-ognl/language-guide.html)
 
 ### List all records
 
@@ -219,7 +223,7 @@ F.Y.I
 ### Delete the specified tt record by index
 
 ```
-tt -d 1001
+tt -d -i 1001
 ```
 
 ### Clear all tt records
